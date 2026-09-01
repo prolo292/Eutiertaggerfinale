@@ -1,0 +1,27 @@
+package com.xss1lent.universaltiertagger.keybind;
+
+import com.xss1lent.universaltiertagger.gui.TierTaggerScreen;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.minecraft.client.option.KeyBinding;
+import net.minecraft.client.util.InputUtil;
+import org.lwjgl.glfw.GLFW;
+
+public class KeyBindings {
+
+    public static KeyBinding OPEN_MENU;
+
+    public static void register() {
+        OPEN_MENU = new KeyBinding(
+                "key.universal_tiertagger.open_menu",
+                InputUtil.Type.KEYSYM,
+                GLFW.GLFW_KEY_Y,
+                "category.universal_tiertagger"
+        );
+
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            while (OPEN_MENU.wasPressed()) {
+                client.setScreen(new TierTaggerScreen());
+            }
+        });
+    }
+}
