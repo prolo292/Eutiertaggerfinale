@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.xss1lent.universaltiertagger.data.GameMode;
 import com.xss1lent.universaltiertagger.data.PlayerTierData;
 import com.xss1lent.universaltiertagger.data.TierlistType;
 
@@ -66,12 +67,23 @@ public class EuropeanTierProvider implements TierProvider {
                             JsonObject tiers =
                                     player.getAsJsonObject("tiers");
 
-                            for (String mode : tiers.keySet()) {
+                            for (String modeName : tiers.keySet()) {
 
-                                String tier =
-                                        tiers.get(mode).getAsString();
+                                try {
+                                    GameMode mode =
+                                            GameMode.valueOf(
+                                                    modeName.toUpperCase()
+                                            );
 
-                                data.setTier(mode, tier);
+                                    String tier =
+                                            tiers.get(modeName).getAsString();
+
+                                    data.setTier(mode, tier);
+
+                                } catch (IllegalArgumentException ignored) {
+                                    // Ignore modes that don't exist
+                                    // in our GameMode enum.
+                                }
                             }
                         }
 
