@@ -1,53 +1,54 @@
 package com.xss1lent.universaltiertagger.gui;
 
 import com.xss1lent.universaltiertagger.UniversalTierTaggerClient;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
 
 public class TierTaggerScreen extends Screen {
 
     public TierTaggerScreen() {
-        super(Text.literal("Universal TierTagger"));
+        super(Component.literal("Universal TierTagger"));
     }
 
     @Override
     protected void init() {
         int centerX = this.width / 2;
 
-        addDrawableChild(
-                ButtonWidget.builder(
-                        Text.literal(
+        addRenderableWidget(
+                Button.builder(
+                        Component.literal(
                                 "Tierlist: " +
                                 UniversalTierTaggerClient.CONFIG.activeTierlist
                         ),
                         button -> cycleTierlist()
-                ).dimensions(centerX - 100, 70, 200, 20).build()
+                ).bounds(centerX - 100, 70, 200, 20).build()
         );
 
-        addDrawableChild(
-                ButtonWidget.builder(
-                        Text.literal(
+        addRenderableWidget(
+                Button.builder(
+                        Component.literal(
                                 "Display: " +
                                 UniversalTierTaggerClient.CONFIG.displayType
                         ),
                         button -> cycleDisplayType()
-                ).dimensions(centerX - 100, 100, 200, 20).build()
+                ).bounds(centerX - 100, 100, 200, 20).build()
         );
 
-        addDrawableChild(
-                ButtonWidget.builder(
-                        Text.literal(
+        addRenderableWidget(
+                Button.builder(
+                        Component.literal(
                                 "Mode: " +
                                 UniversalTierTaggerClient.CONFIG.specificMode
                         ),
                         button -> cycleGameMode()
-                ).dimensions(centerX - 100, 130, 200, 20).build()
+                ).bounds(centerX - 100, 130, 200, 20).build()
         );
 
-        addDrawableChild(
-                ButtonWidget.builder(
-                        Text.literal(
+        addRenderableWidget(
+                Button.builder(
+                        Component.literal(
                                 "Tab List: " +
                                 (UniversalTierTaggerClient.CONFIG.showInTab
                                         ? "ON"
@@ -57,14 +58,14 @@ public class TierTaggerScreen extends Screen {
                             UniversalTierTaggerClient.CONFIG.showInTab =
                                     !UniversalTierTaggerClient.CONFIG.showInTab;
 
-                            clearAndInit();
+                            rebuildWidgets();
                         }
-                ).dimensions(centerX - 100, 160, 200, 20).build()
+                ).bounds(centerX - 100, 160, 200, 20).build()
         );
 
-        addDrawableChild(
-                ButtonWidget.builder(
-                        Text.literal(
+        addRenderableWidget(
+                Button.builder(
+                        Component.literal(
                                 "Nametags: " +
                                 (UniversalTierTaggerClient.CONFIG.showNametags
                                         ? "ON"
@@ -74,19 +75,19 @@ public class TierTaggerScreen extends Screen {
                             UniversalTierTaggerClient.CONFIG.showNametags =
                                     !UniversalTierTaggerClient.CONFIG.showNametags;
 
-                            clearAndInit();
+                            rebuildWidgets();
                         }
-                ).dimensions(centerX - 100, 190, 200, 20).build()
+                ).bounds(centerX - 100, 190, 200, 20).build()
         );
 
-        addDrawableChild(
-                ButtonWidget.builder(
-                        Text.literal("Save Settings"),
+        addRenderableWidget(
+                Button.builder(
+                        Component.literal("Save Settings"),
                         button -> {
                             UniversalTierTaggerClient.CONFIG.save();
-                            close();
+                            onClose();
                         }
-                ).dimensions(centerX - 100, 230, 200, 20).build()
+                ).bounds(centerX - 100, 230, 200, 20).build()
         );
     }
 
@@ -114,19 +115,16 @@ public class TierTaggerScreen extends Screen {
         UniversalTierTaggerClient.CONFIG.activeTierlist =
                 tierlists[currentIndex];
 
-        clearAndInit();
+        rebuildWidgets();
     }
 
     private void cycleDisplayType() {
-        if ("HIGHEST".equals(
-                UniversalTierTaggerClient.CONFIG.displayType
-        )) {
-            UniversalTierTaggerClient.CONFIG.displayType = "SPECIFIC";
-        } else {
-            UniversalTierTaggerClient.CONFIG.displayType = "HIGHEST";
-        }
+        UniversalTierTaggerClient.CONFIG.displayType =
+                UniversalTierTaggerClient.CONFIG.displayType.equals("HIGHEST")
+                        ? "SPECIFIC"
+                        : "HIGHEST";
 
-        clearAndInit();
+        rebuildWidgets();
     }
 
     private void cycleGameMode() {
@@ -158,42 +156,42 @@ public class TierTaggerScreen extends Screen {
         UniversalTierTaggerClient.CONFIG.specificMode =
                 modes[currentIndex];
 
-        clearAndInit();
+        rebuildWidgets();
     }
 
     @Override
-    public void close() {
+    public void onClose() {
         UniversalTierTaggerClient.CONFIG.save();
-        super.close();
+        super.onClose();
     }
 
     @Override
     public void render(
-            net.minecraft.client.gui.DrawContext context,
+            GuiGraphics graphics,
             int mouseX,
             int mouseY,
             float delta
     ) {
-        super.render(context, mouseX, mouseY, delta);
+        super.render(graphics, mouseX, mouseY, delta);
 
-        context.drawCenteredTextWithShadow(
-                textRenderer,
+        graphics.drawCenteredString(
+                font,
                 "Universal TierTagger",
                 width / 2,
                 35,
                 0xFFFFFF
         );
 
-        context.drawCenteredTextWithShadow(
-                textRenderer,
+        graphics.drawCenteredString(
+                font,
                 "Preview: PlayerName  LT5  Crystal",
                 width / 2,
                 280,
                 0xFFFFFF
         );
 
-        context.drawTextWithShadow(
-                textRenderer,
+        graphics.drawString(
+                font,
                 "Made by XsS1lent",
                 width - 110,
                 height - 20,
