@@ -2,6 +2,7 @@ package com.xss1lent.universaltiertagger;
 
 import com.xss1lent.universaltiertagger.cache.TierCache;
 import com.xss1lent.universaltiertagger.config.TierTaggerConfig;
+import com.xss1lent.universaltiertagger.keybind.KeyBindings;
 import com.xss1lent.universaltiertagger.provider.TierProviderManager;
 import net.fabricmc.api.ClientModInitializer;
 import org.slf4j.Logger;
@@ -23,6 +24,8 @@ public class UniversalTierTaggerClient implements ClientModInitializer {
         CONFIG = TierTaggerConfig.load();
         CACHE = new TierCache();
         PROVIDERS = new TierProviderManager();
+
+        KeyBindings.register();
 
         LOGGER.info("Universal TierTagger initialized!");
     }
