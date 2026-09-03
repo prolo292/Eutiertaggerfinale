@@ -13,13 +13,22 @@ public class TierProviderManager {
             new EnumMap<>(TierlistType.class);
 
     public TierProviderManager() {
+
+        // European Tierlist
         registerProvider(new EuropeanTierProvider());
+
+        // MCTiers
+        registerProvider(new MCTiersProvider());
+
+        // MCPVP current/BETA tiers only
+        registerProvider(new MCPVPProvider());
     }
 
     /**
      * Registers a tier provider.
      */
     public void registerProvider(TierProvider provider) {
+
         if (provider == null) {
             return;
         }
