@@ -1,134 +1,98 @@
-package com.xss1lent.universaltiertagger.provider;
+package com.xss1lent.universaltiertagger.cache;
 
-import com.xss1lent.universaltiertagger.UniversalTierTaggerClient;
 import com.xss1lent.universaltiertagger.data.PlayerTierData;
 import com.xss1lent.universaltiertagger.data.TierlistType;
 
-import java.util.EnumMap;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
-public class TierProviderManager {
+public class TierCache {
 
-    private static final int CACHE_DURATION_SECONDS = 300;
+    private final Map<String, CachedPlayerData> cache =
+            new ConcurrentHashMap<>();
 
-    private final Map<TierlistType, TierProvider> providers =
-            new EnumMap<>(TierlistType.class);
-
-    public TierProviderManager() {
-
-        registerProvider(new EuropeanTierProvider());
-        registerProvider(new MCTiersProvider());
-        registerProvider(new MCPVPProvider());
-    }
-
-    /**
-     * Registers a tier provider.
-     */
-    public void registerProvider(TierProvider provider) {
-
-        if (provider == null) {
+    public void put(
+            TierlistType tierlist,
+            String username,
+            PlayerTierData data
+    ) {
+        if (tierlist == null || username == null || data == null) {
             return;
         }
 
-        providers.put(
-                provider.getTierlistType(),
-                provider
+        String key = createKey(tierlist, username);
+
+        cache.put(
+                key,
+                new CachedPlayerData(
+                        data,
+                        System.currentTimeMillis()
+                )
         );
     }
 
-    /**
-     * Gets a provider by tierlist type.
-     */
-    public TierProvider getProvider(TierlistType type) {
-        return providers.get(type);
+    public PlayerTierData get(
+            TierlistType tierlist,
+            String username,
+            int maxAgeSeconds
+    ) {
+        if (tierlist == null || username == null) {
+            return null;
+        }
+
+        String key = createKey(tierlist, username);
+
+        CachedPlayerData cachedData = cache.get(key);
+
+        if (cachedData == null) {
+            return null;
+        }
+
+        long ageMilliseconds =
+                System.currentTimeMillis() - cachedData.timestamp;
+
+        long maxAgeMilliseconds =
+                maxAgeSeconds * 1000L;
+
+        if (ageMilliseconds > maxAgeMilliseconds) {
+            cache.remove(key);
+            return null;
+        }
+
+        return cachedData.data;
     }
 
-    /**
-     * Fetches player tiers.
-     *
-     * First checks cache.
-     * If no valid cache exists, fetches from the provider.
-     */
-    public CompletableFuture<PlayerTierData> fetchPlayerTiers(
-            TierlistType type,
+    public void remove(
+            TierlistType tierlist,
             String username
     ) {
-
-        if (type == null || username == null || username.isBlank()) {
-            return CompletableFuture.completedFuture(
-                    new PlayerTierData(username)
-            );
-        }
-
-        // Check cache first
-        if (UniversalTierTaggerClient.CACHE != null) {
-
-            PlayerTierData cachedData =
-                    UniversalTierTaggerClient.CACHE.get(
-                            type,
-                            username,
-                            CACHE_DURATION_SECONDS
-                    );
-
-            if (cachedData != null) {
-                return CompletableFuture.completedFuture(cachedData);
-            }
-        }
-
-        TierProvider provider = getProvider(type);
-
-        if (provider == null) {
-            return CompletableFuture.completedFuture(
-                    new PlayerTierData(username)
-            );
-        }
-
-        // Fetch from API and cache result
-        return provider.fetchPlayerTiers(username)
-                .thenApply(data -> {
-
-                    if (data == null) {
-                        data = new PlayerTierData(username);
-                    }
-
-                    if (UniversalTierTaggerClient.CACHE != null) {
-                        UniversalTierTaggerClient.CACHE.put(
-                                type,
-                                username,
-                                data
-                        );
-                    }
-
-                    return data;
-                })
-                .exceptionally(exception -> {
-
-                    UniversalTierTaggerClient.LOGGER.warn(
-                            "Failed to fetch {} tiers for {}",
-                            type,
-                            username,
-                            exception
-                    );
-
-                    return new PlayerTierData(username);
-                });
+        cache.remove(createKey(tierlist, username));
     }
 
-    /**
-     * Checks if a provider is registered.
-     */
-    public boolean hasProvider(TierlistType type) {
-        return providers.containsKey(type);
+    public void clear() {
+        cache.clear();
     }
 
-    /**
-     * Clears all cached tier data.
-     */
-    public void clearCache() {
+    private String createKey(
+            TierlistType tierlist,
+            String username
+    ) {
+        return tierlist.name()
+                + ":"
+                + username.toLowerCase();
+    }
 
-        if (UniversalTierTaggerClient.CACHE != null) {
-            UniversalTierTaggerClient.CACHE.clear();
+    private static class CachedPlayerData {
+
+        private final PlayerTierData data;
+        private final long timestamp;
+
+        private CachedPlayerData(
+                PlayerTierData data,
+                long timestamp
+        ) {
+            this.data = data;
+            this.timestamp = timestamp;
         }
     }
 }
