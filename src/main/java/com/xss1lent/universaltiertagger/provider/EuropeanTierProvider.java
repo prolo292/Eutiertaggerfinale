@@ -40,7 +40,8 @@ public class EuropeanTierProvider implements TierProvider {
                 )) {
 
                     JsonArray players =
-                            JsonParser.parseReader(reader).getAsJsonArray();
+                            JsonParser.parseReader(reader)
+                                    .getAsJsonArray();
 
                     for (JsonElement element : players) {
 
@@ -57,10 +58,7 @@ public class EuropeanTierProvider implements TierProvider {
                         }
 
                         PlayerTierData data =
-                                new PlayerTierData(
-                                        username,
-                                        TierlistType.EUROPEAN
-                                );
+                                new PlayerTierData(username);
 
                         if (player.has("tiers")) {
 
@@ -76,20 +74,19 @@ public class EuropeanTierProvider implements TierProvider {
                                             );
 
                                     String tier =
-                                            tiers.get(modeName).getAsString();
+                                            tiers.get(modeName)
+                                                    .getAsString();
 
                                     data.setTier(mode, tier);
 
                                 } catch (IllegalArgumentException ignored) {
-                                    // Ignore modes that don't exist
-                                    // in our GameMode enum.
+                                    // Ignore unknown game modes
                                 }
                             }
                         }
 
                         return data;
                     }
-
                 }
 
             } catch (Exception e) {
@@ -99,10 +96,7 @@ public class EuropeanTierProvider implements TierProvider {
                 );
             }
 
-            return new PlayerTierData(
-                    username,
-                    TierlistType.EUROPEAN
-            );
+            return new PlayerTierData(username);
         });
     }
 
