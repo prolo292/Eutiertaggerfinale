@@ -1,6 +1,7 @@
 package com.xss1lent.universaltiertagger;
 
 import com.xss1lent.universaltiertagger.cache.TierCache;
+import com.xss1lent.universaltiertagger.command.TierCommands;
 import com.xss1lent.universaltiertagger.config.TierTaggerConfig;
 import com.xss1lent.universaltiertagger.keybind.KeyBindings;
 import com.xss1lent.universaltiertagger.provider.TierProviderManager;
@@ -19,6 +20,7 @@ public class UniversalTierTaggerClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+
         LOGGER.info("Initializing Universal TierTagger...");
 
         CONFIG = TierTaggerConfig.load();
@@ -26,6 +28,8 @@ public class UniversalTierTaggerClient implements ClientModInitializer {
         PROVIDERS = new TierProviderManager();
 
         KeyBindings.register();
+
+        TierCommands.register();
 
         LOGGER.info("Universal TierTagger initialized!");
     }
