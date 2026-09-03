@@ -32,22 +32,48 @@ public abstract class PlayerRendererMixin {
             return;
         }
 
-        String tierText =
-                TierNametagRenderer.getPrimaryText(username);
-
-        if (tierText == null || tierText.isBlank()) {
-            return;
-        }
-
         Component originalName = cir.getReturnValue();
 
         if (originalName == null) {
             return;
         }
 
-        cir.setReturnValue(
-                Component.literal(tierText + " ")
-                        .append(originalName)
-        );
+        String primary =
+                TierNametagRenderer.getPrimaryText(username);
+
+        String secondary =
+                TierNametagRenderer.getSecondaryText(username);
+
+        boolean hasPrimary =
+                primary != null && !primary.isBlank();
+
+        boolean hasSecondary =
+                secondary != null && !secondary.isBlank();
+
+        if (!hasPrimary && !hasSecondary) {
+            return;
+        }
+
+        Component result = Component.empty();
+
+        /*
+         * Secondary tier goes above everything.
+         */
+        if (hasSecondary) {
+            result = Component.literal(secondary + "\n");
+        }
+
+        /*
+         * Primary tier goes next to the player's name.
+         */
+        if (hasPrimary) {
+            result = result.copy()
+                    .append(Component.literal(primary + " "));
+        }
+
+        result = result.copy()
+                .append(originalName);
+
+        cir.setReturnValue(result);
     }
 }
