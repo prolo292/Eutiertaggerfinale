@@ -7,49 +7,40 @@ import com.xss1lent.universaltiertagger.data.TierlistType;
 
 public class TierDisplayManager {
 
-    /**
-     * Gets the tier that should appear next to the player's name.
-     */
     public static DisplayTier getPrimaryTier(String username) {
-
-        return getTier(
-                username,
+        return getTierForTierlist(
                 UniversalTierTaggerClient.CONFIG.primaryTierlist,
-                UniversalTierTaggerClient.CONFIG.primaryDisplayType,
-                UniversalTierTaggerClient.CONFIG.primarySpecificMode
+                username
         );
     }
 
-    /**
-     * Gets the tier that should appear above the player's head.
-     */
     public static DisplayTier getSecondaryTier(String username) {
 
-        return getTier(
-                username,
+        if (!UniversalTierTaggerClient.CONFIG.showSecondaryTierlist) {
+            return null;
+        }
+
+        return getTierForTierlist(
                 UniversalTierTaggerClient.CONFIG.secondaryTierlist,
-                UniversalTierTaggerClient.CONFIG.secondaryDisplayType,
-                UniversalTierTaggerClient.CONFIG.secondarySpecificMode
+                username
         );
     }
 
-    private static DisplayTier getTier(
-            String username,
+    private static DisplayTier getTierForTierlist(
             String tierlistName,
-            String displayType,
-            String specificMode
+            String username
     ) {
 
-        if (username == null
-                || UniversalTierTaggerClient.CONFIG == null
+        if (tierlistName == null
+                || username == null
                 || UniversalTierTaggerClient.CACHE == null) {
             return null;
         }
 
-        TierlistType tierlist;
+        TierlistType type;
 
         try {
-            tierlist = TierlistType.valueOf(
+            type = TierlistType.valueOf(
                     tierlistName.toUpperCase()
             );
         } catch (Exception exception) {
@@ -58,7 +49,7 @@ public class TierDisplayManager {
 
         PlayerTierData data =
                 UniversalTierTaggerClient.CACHE.get(
-                        tierlist,
+                        type,
                         username,
                         300
                 );
@@ -67,39 +58,42 @@ public class TierDisplayManager {
             return null;
         }
 
-        GameMode mode;
-        String tier;
+        String displayType =
+                UniversalTierTaggerClient.CONFIG.displayType;
 
         if ("HIGHEST".equalsIgnoreCase(displayType)) {
 
-            mode = data.getHighestTierMode();
-            tier = data.getHighestTier();
+            String tier = data.getHighestTier();
+            GameMode mode = data.getHighestTierMode();
 
-        } else {
-
-            mode = GameMode.fromString(specificMode);
-            tier = data.getTier(mode);
-        }
-
-        if (tier == null || tier.isBlank()) {
-
-            if (!UniversalTierTaggerClient.CONFIG.showUnranked) {
+            if (tier == null || mode == null) {
                 return null;
             }
 
-            tier = "UNRANKED";
+            return new DisplayTier(
+                    type,
+                    mode,
+                    tier
+            );
+        }
+
+        GameMode mode = GameMode.fromString(
+                UniversalTierTaggerClient.CONFIG.specificMode
+        );
+
+        String tier = data.getTier(mode);
+
+        if (tier == null) {
+            return null;
         }
 
         return new DisplayTier(
-                tierlist,
+                type,
                 mode,
                 tier
         );
     }
 
-    /**
-     * Represents one tier ready for rendering.
-     */
     public record DisplayTier(
             TierlistType tierlist,
             GameMode mode,
