@@ -27,6 +27,7 @@ public class MCTiersProvider implements TierProvider {
             PlayerTierData data = new PlayerTierData(username);
 
             try {
+
                 String url = API_BASE + username;
 
                 HttpURLConnection connection =
@@ -38,10 +39,22 @@ public class MCTiersProvider implements TierProvider {
                 connection.setConnectTimeout(5000);
                 connection.setReadTimeout(5000);
 
-                try (InputStreamReader reader = new InputStreamReader(
-                        connection.getInputStream(),
-                        StandardCharsets.UTF_8
-                )) {
+                connection.setRequestProperty(
+                        "User-Agent",
+                        "UniversalTierTagger/1.0"
+                );
+
+                int responseCode = connection.getResponseCode();
+
+                if (responseCode != 200) {
+                    return data;
+                }
+
+                try (InputStreamReader reader =
+                             new InputStreamReader(
+                                     connection.getInputStream(),
+                                     StandardCharsets.UTF_8
+                             )) {
 
                     JsonElement root =
                             JsonParser.parseReader(reader);
@@ -50,72 +63,195 @@ public class MCTiersProvider implements TierProvider {
                         return data;
                     }
 
-                    JsonObject profile = root.getAsJsonObject();
+                    JsonObject profile =
+                            root.getAsJsonObject();
 
-                    // Try to locate tier/ranking objects in the response
-                    for (String possibleKey : new String[]{
+                    parsePossibleTierObject(
+                            profile,
+                            data
+                    );
+
+                    String[] possibleKeys = {
                             "tiers",
                             "rankings",
                             "ladders",
-                            "placements"
-                    }) {
+                            "placements",
+                            "gameModes",
+                            "gamemodes"
+                    };
 
-                        if (!profile.has(possibleKey)
-                                || !profile.get(possibleKey).isJsonObject()) {
+                    for (String key : possibleKeys) {
+
+                        if (!profile.has(key)) {
                             continue;
                         }
 
-                        JsonObject tierObject =
-                                profile.getAsJsonObject(possibleKey);
+                        JsonElement element =
+                                profile.get(key);
 
-                        for (Map.Entry<String, JsonElement> entry
-                                : tierObject.entrySet()) {
+                        if (element.isJsonObject()) {
 
-                            GameMode mode =
-                                    GameMode.fromString(entry.getKey());
-
-                            if (mode == null) {
-                                continue;
-                            }
-
-                            JsonElement value = entry.getValue();
-
-                            String tier = null;
-
-                            if (value.isJsonPrimitive()) {
-                                tier = value.getAsString();
-
-                            } else if (value.isJsonObject()) {
-
-                                JsonObject tierData =
-                                        value.getAsJsonObject();
-
-                                if (tierData.has("tier")) {
-                                    tier = tierData
-                                            .get("tier")
-                                            .getAsString();
-                                }
-                            }
-
-                            if (tier != null
-                                    && !tier.isBlank()
-                                    && !tier.equalsIgnoreCase("null")) {
-
-                                data.setTier(mode, tier);
-                            }
+                            parsePossibleTierObject(
+                                    element.getAsJsonObject(),
+                                    data
+                            );
                         }
                     }
                 }
 
-            } catch (Exception e) {
+                connection.disconnect();
+
+            } catch (Exception exception) {
+
                 System.err.println(
-                        "[Universal TierTagger] Failed to fetch MCTiers data: "
-                                + e.getMessage()
+                        "[Universal TierTagger] "
+                                + "Failed to fetch MCTiers data for "
+                                + username
+                                + ": "
+                                + exception.getMessage()
                 );
             }
 
             return data;
         });
+    }
+
+    private void parsePossibleTierObject(
+            JsonObject object,
+            PlayerTierData data
+    ) {
+
+        for (Map.Entry<String, JsonElement> entry
+                : object.entrySet()) {
+
+            GameMode mode =
+                    getMCTiersMode(entry.getKey());
+
+            if (mode == null) {
+                continue;
+            }
+
+            String tier =
+                    extractTier(entry.getValue());
+
+            if (tier == null
+                    || tier.isBlank()
+                    || tier.equalsIgnoreCase("null")
+                    || tier.equalsIgnoreCase("unranked")) {
+
+                continue;
+            }
+
+            data.setTier(
+                    mode,
+                    normalizeTier(tier)
+            );
+        }
+    }
+
+    private GameMode getMCTiersMode(String value) {
+
+        if (value == null) {
+            return null;
+        }
+
+        String mode = value
+                .toLowerCase()
+                .replace("-", "")
+                .replace("_", "")
+                .replace(" ", "");
+
+        return switch (mode) {
+
+            case "sword" -> GameMode.SWORD;
+
+            case "axe" -> GameMode.AXE;
+
+            case "pot",
+                 "potion" -> GameMode.POT;
+
+            case "nethop",
+                 "nethpot",
+                 "netheritepot" -> GameMode.NETHOP;
+
+            case "uhc" -> GameMode.UHC;
+
+            case "smp" -> GameMode.SMP;
+
+            case "vanilla" -> GameMode.VANILLA;
+
+            case "mace" -> GameMode.MACE;
+
+            default -> null;
+        };
+    }
+
+    private String extractTier(JsonElement value) {
+
+        if (value == null
+                || value.isJsonNull()) {
+
+            return null;
+        }
+
+        if (value.isJsonPrimitive()) {
+
+            return value.getAsString();
+        }
+
+        if (!value.isJsonObject()) {
+
+            return null;
+        }
+
+        JsonObject object =
+                value.getAsJsonObject();
+
+        String[] possibleTierKeys = {
+                "tier",
+                "rank",
+                "currentTier",
+                "current_tier",
+                "placement"
+        };
+
+        for (String key : possibleTierKeys) {
+
+            if (object.has(key)
+                    && !object.get(key).isJsonNull()) {
+
+                JsonElement tierElement =
+                        object.get(key);
+
+                if (tierElement.isJsonPrimitive()) {
+                    return tierElement.getAsString();
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private String normalizeTier(String tier) {
+
+        if (tier == null) {
+            return null;
+        }
+
+        String normalized =
+                tier.trim().toUpperCase();
+
+        /*
+         * MCTiers may return:
+         *
+         * 4
+         * HT4
+         * LT4
+         *
+         * We preserve the exact format when possible.
+         */
+
+        return normalized;
     }
 
     @Override
