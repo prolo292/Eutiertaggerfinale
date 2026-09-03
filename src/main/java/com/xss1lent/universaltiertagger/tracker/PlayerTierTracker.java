@@ -6,6 +6,7 @@ import com.xss1lent.universaltiertagger.data.TierlistType;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class PlayerTierTracker {
@@ -23,7 +24,7 @@ public class PlayerTierTracker {
                 return;
             }
 
-            // Check players every 2 seconds
+            // Check players every 2 seconds.
             tickCounter++;
 
             if (tickCounter < 40) {
@@ -34,7 +35,7 @@ public class PlayerTierTracker {
 
             client.level.players().forEach(player -> {
 
-                // Don't fetch our own player
+                // Do not fetch our own player.
                 if (player == client.player) {
                     return;
                 }
@@ -59,7 +60,7 @@ public class PlayerTierTracker {
 
         String loadingKey = username.toLowerCase();
 
-        // Already loading
+        // Already loading.
         if (LOADING_PLAYERS.contains(loadingKey)) {
             return;
         }
@@ -85,7 +86,7 @@ public class PlayerTierTracker {
                         300
                 );
 
-        // Everything already cached
+        // Everything is already cached.
         if (european != null
                 && mctiers != null
                 && mcpvp != null) {
@@ -96,77 +97,83 @@ public class PlayerTierTracker {
             return;
         }
 
-        // Fetch all tierlists
-        var europeanFuture =
+        CompletableFuture<PlayerTierData> europeanFuture =
                 UniversalTierTaggerClient.PROVIDERS.fetchPlayerTiers(
                         TierlistType.EUROPEAN,
                         username
                 );
 
-        var mctiersFuture =
+        CompletableFuture<PlayerTierData> mctiersFuture =
                 UniversalTierTaggerClient.PROVIDERS.fetchPlayerTiers(
                         TierlistType.MCTIERS,
                         username
                 );
 
-        var mcpvpFuture =
+        CompletableFuture<PlayerTierData> mcpvpFuture =
                 UniversalTierTaggerClient.PROVIDERS.fetchPlayerTiers(
                         TierlistType.MCPVP,
                         username
                 );
 
-  java.util.concurrent.CompletableFuture.allOf(
-        europeanFuture,
-        mctiersFuture,
-        mcpvpFuture
-).whenComplete((result, throwable) -> {
+        CompletableFuture.allOf(
+                europeanFuture,
+                mctiersFuture,
+                mcpvpFuture
+        ).whenComplete((result, throwable) -> {
 
-    try {
+            try {
 
-        if (throwable == null) {
+                if (throwable == null) {
 
-            PlayerTierData europeanData = europeanFuture.join();
-            PlayerTierData mctiersData = mctiersFuture.join();
-            PlayerTierData mcpvpData = mcpvpFuture.join();
+                    PlayerTierData europeanData =
+                            europeanFuture.join();
 
-            UniversalTierTaggerClient.CACHE.put(
-                    TierlistType.EUROPEAN,
-                    username,
-                    europeanData
-            );
+                    PlayerTierData mctiersData =
+                            mctiersFuture.join();
 
-            UniversalTierTaggerClient.CACHE.put(
-                    TierlistType.MCTIERS,
-                    username,
-                    mctiersData
-            );
+                    PlayerTierData mcpvpData =
+                            mcpvpFuture.join();
 
-            UniversalTierTaggerClient.CACHE.put(
-                    TierlistType.MCPVP,
-                    username,
-                    mcpvpData
-            );
-        }
+                    UniversalTierTaggerClient.CACHE.put(
+                            TierlistType.EUROPEAN,
+                            username,
+                            europeanData
+                    );
 
-    } catch (Exception exception) {
+                    UniversalTierTaggerClient.CACHE.put(
+                            TierlistType.MCTIERS,
+                            username,
+                            mctiersData
+                    );
 
-        UniversalTierTaggerClient.LOGGER.warn(
-                "Failed to cache tiers for {}",
-                username,
-                exception
-        );
+                    UniversalTierTaggerClient.CACHE.put(
+                            TierlistType.MCPVP,
+                            username,
+                            mcpvpData
+                    );
+                }
 
-    } finally {
+            } catch (Exception exception) {
 
-        LOADING_PLAYERS.remove(loadingKey);
+                UniversalTierTaggerClient.LOGGER.warn(
+                        "Failed to cache tiers for {}",
+                        username,
+                        exception
+                );
+
+            } finally {
+
+                LOADING_PLAYERS.remove(loadingKey);
+            }
+
+            if (throwable != null) {
+
+                UniversalTierTaggerClient.LOGGER.warn(
+                        "Failed to load tiers for {}",
+                        username,
+                        throwable
+                );
+            }
+        });
     }
-
-    if (throwable != null) {
-
-        UniversalTierTaggerClient.LOGGER.warn(
-                "Failed to load tiers for {}",
-                username,
-                throwable
-        );
-    }
-});
+}
