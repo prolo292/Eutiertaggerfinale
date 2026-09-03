@@ -14,36 +14,37 @@ import java.util.Map;
 public class TierTaggerConfig {
 
     /*
-     * PRIMARY TIER
-     * Displayed next to the player's name.
+     * Primary tierlist.
+     * This tier appears next to the player name.
      */
-
     public String primaryTierlist = "EUROPEAN";
 
-    public String primaryDisplayType = "HIGHEST";
-
-    public String primarySpecificMode = "CRYSTAL";
-
-    public boolean showPrimary = true;
-
+    /*
+     * Secondary tierlist.
+     * This tier appears above the primary nametag.
+     */
+    public String secondaryTierlist = "MCTIERS";
 
     /*
-     * SECONDARY TIER
-     * Displayed above the player's head.
+     * Enable or disable the secondary tier display.
      */
-
-    public String secondaryTierlist = "MCPVP";
-
-    public String secondaryDisplayType = "HIGHEST";
-
-    public String secondarySpecificMode = "SWORD";
-
-    public boolean showSecondary = true;
-
+    public boolean showSecondaryTierlist = true;
 
     /*
-     * GENERAL DISPLAY SETTINGS
+     * Legacy option kept for compatibility.
      */
+    public String activeTierlist = "EUROPEAN";
+
+    /*
+     * HIGHEST = Show the best tier.
+     * SPECIFIC = Show a selected game mode.
+     */
+    public String displayType = "HIGHEST";
+
+    /*
+     * Used when displayType is SPECIFIC.
+     */
+    public String specificMode = "CRYSTAL";
 
     public boolean showInTab = true;
 
@@ -59,36 +60,30 @@ public class TierTaggerConfig {
 
     public boolean useFallbackTierlists = false;
 
-    public int refreshIntervalSeconds = 300;
+    /*
+     * How often player data can be refreshed.
+     */
+    public int refreshIntervalSeconds = 120;
 
+    /*
+     * Size used by tier/mode icons.
+     */
     public int iconSize = 16;
 
     public String nameColor = "#FFFFFF";
 
-    public Map<String, String> tierColors = createDefaultTierColors();
+    public Map<String, String> tierColors =
+            createDefaultTierColors();
 
-
-    /*
-     * LEGACY SETTINGS
-     *
-     * Kept temporarily so old config files don't break.
-     */
-
-    public String activeTierlist = null;
-
-    public String displayType = null;
-
-    public String specificMode = null;
-
-
-    private static final Gson GSON = new GsonBuilder()
-            .setPrettyPrinting()
-            .create();
-
+    private static final Gson GSON =
+            new GsonBuilder()
+                    .setPrettyPrinting()
+                    .create();
 
     private static Map<String, String> createDefaultTierColors() {
 
-        Map<String, String> colors = new LinkedHashMap<>();
+        Map<String, String> colors =
+                new LinkedHashMap<>();
 
         colors.put("HT1", "#FFD700");
         colors.put("LT1", "#E6C15A");
@@ -105,11 +100,19 @@ public class TierTaggerConfig {
         colors.put("HT5", "#9A8BB8");
         colors.put("LT5", "#666B78");
 
+        /*
+         * MC Tiers numeric ranks.
+         */
+        colors.put("1", "#FFD700");
+        colors.put("2", "#C7D5E8");
+        colors.put("3", "#E89A57");
+        colors.put("4", "#B57DA3");
+        colors.put("5", "#666B78");
+
         colors.put("UNRANKED", "#808080");
 
         return colors;
     }
-
 
     private static Path getConfigPath() {
 
@@ -117,7 +120,6 @@ public class TierTaggerConfig {
                 .getConfigDir()
                 .resolve("universal-tiertagger.json");
     }
-
 
     public static TierTaggerConfig load() {
 
@@ -127,10 +129,11 @@ public class TierTaggerConfig {
 
             if (Files.exists(path)) {
 
-                TierTaggerConfig config = GSON.fromJson(
-                        Files.readString(path),
-                        TierTaggerConfig.class
-                );
+                TierTaggerConfig config =
+                        GSON.fromJson(
+                                Files.readString(path),
+                                TierTaggerConfig.class
+                        );
 
                 if (config != null) {
 
@@ -149,12 +152,13 @@ public class TierTaggerConfig {
             );
         }
 
-        TierTaggerConfig config = new TierTaggerConfig();
+        TierTaggerConfig config =
+                new TierTaggerConfig();
+
         config.save();
 
         return config;
     }
-
 
     private void fixMissingValues() {
 
@@ -174,12 +178,11 @@ public class TierTaggerConfig {
             );
         }
 
-
         /*
-         * Migrate old configuration
+         * Upgrade old configs automatically.
          */
-
-        if (primaryTierlist == null) {
+        if (primaryTierlist == null
+                || primaryTierlist.isBlank()) {
 
             primaryTierlist =
                     activeTierlist != null
@@ -187,53 +190,36 @@ public class TierTaggerConfig {
                             : "EUROPEAN";
         }
 
-        if (primaryDisplayType == null) {
+        if (secondaryTierlist == null
+                || secondaryTierlist.isBlank()) {
 
-            primaryDisplayType =
-                    displayType != null
-                            ? displayType
-                            : "HIGHEST";
+            secondaryTierlist = "MCTIERS";
         }
 
-        if (primarySpecificMode == null) {
-
-            primarySpecificMode =
-                    specificMode != null
-                            ? specificMode
-                            : "CRYSTAL";
+        if (activeTierlist == null) {
+            activeTierlist = primaryTierlist;
         }
 
-
-        /*
-         * Secondary defaults
-         */
-
-        if (secondaryTierlist == null) {
-            secondaryTierlist = "MCPVP";
+        if (displayType == null) {
+            displayType = "HIGHEST";
         }
 
-        if (secondaryDisplayType == null) {
-            secondaryDisplayType = "HIGHEST";
+        if (specificMode == null) {
+            specificMode = "CRYSTAL";
         }
 
-        if (secondarySpecificMode == null) {
-            secondarySpecificMode = "SWORD";
-        }
-
-
-        /*
-         * Safety limits
-         */
-
-        if (refreshIntervalSeconds < 60) {
-            refreshIntervalSeconds = 60;
+        if (refreshIntervalSeconds < 20) {
+            refreshIntervalSeconds = 20;
         }
 
         if (iconSize < 8) {
             iconSize = 8;
         }
-    }
 
+        if (iconSize > 32) {
+            iconSize = 32;
+        }
+    }
 
     public void save() {
 
