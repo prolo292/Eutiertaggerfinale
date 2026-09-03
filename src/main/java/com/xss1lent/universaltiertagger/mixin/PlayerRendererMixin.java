@@ -1,6 +1,7 @@
 package com.xss1lent.universaltiertagger.mixin;
 
-import com.xss1lent.universaltiertagger.render.TierNametagRenderer;
+import com.xss1lent.universaltiertagger.display.TierComponentFormatter;
+import com.xss1lent.universaltiertagger.display.TierDisplayManager;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.network.chat.Component;
@@ -38,41 +39,44 @@ public abstract class PlayerRendererMixin {
             return;
         }
 
-        String primary =
-                TierNametagRenderer.getPrimaryText(username);
+        TierDisplayManager.DisplayTier primaryTier =
+                TierDisplayManager.getPrimaryTier(username);
 
-        String secondary =
-                TierNametagRenderer.getSecondaryText(username);
-
-        boolean hasPrimary =
-                primary != null && !primary.isBlank();
-
-        boolean hasSecondary =
-                secondary != null && !secondary.isBlank();
-
-        if (!hasPrimary && !hasSecondary) {
-            return;
-        }
+        TierDisplayManager.DisplayTier secondaryTier =
+                TierDisplayManager.getSecondaryTier(username);
 
         Component result = Component.empty();
 
-        /*
-         * Secondary tier goes above everything.
-         */
-        if (hasSecondary) {
-            result = Component.literal(secondary + "\n");
-        }
+        // Secondary tier above the player's name
+        if (secondaryTier != null) {
 
-        /*
-         * Primary tier goes next to the player's name.
-         */
-        if (hasPrimary) {
             result = result.copy()
-                    .append(Component.literal(primary + " "));
+                    .append(
+                            TierComponentFormatter.formatSecondary(
+                                    secondaryTier
+                            )
+                    )
+                    .append(Component.literal("\n"));
         }
 
-        result = result.copy()
-                .append(originalName);
+        // Primary tier next to player's name
+        if (primaryTier != null) {
+
+            result = result.copy()
+                    .append(
+                            TierComponentFormatter.formatPrimary(
+                                    primaryTier
+                            )
+                    )
+                    .append(Component.literal(" "));
+        }
+
+        // Don't modify players without tier data
+        if (primaryTier == null && secondaryTier == null) {
+            return;
+        }
+
+        result = result.copy().append(originalName);
 
         cir.setReturnValue(result);
     }
