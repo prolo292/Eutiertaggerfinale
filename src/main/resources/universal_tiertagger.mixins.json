@@ -3,7 +3,8 @@
   "package": "com.xss1lent.universaltiertagger.mixin",
   "compatibilityLevel": "JAVA_21",
   "client": [
-    "PlayerListEntryMixin"
+    "PlayerListEntryMixin",
+    "PlayerTabOverlayMixin"
   ],
   "injectors": {
     "defaultRequire": 1
