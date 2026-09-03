@@ -1,7 +1,8 @@
 package com.xss1lent.universaltiertagger.mixin;
 
 import com.mojang.authlib.GameProfile;
-import com.xss1lent.universaltiertagger.render.TierTabRenderer;
+import com.xss1lent.universaltiertagger.display.TierComponentFormatter;
+import com.xss1lent.universaltiertagger.display.TierDisplayManager;
 import net.minecraft.client.gui.components.PlayerTabOverlay;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.network.chat.Component;
@@ -35,17 +36,25 @@ public class PlayerTabOverlayMixin {
             return;
         }
 
-        String tierText =
-                TierTabRenderer.getTabText(username);
+        TierDisplayManager.DisplayTier tier =
+                TierDisplayManager.getPrimaryTier(username);
 
-        if (tierText == null || tierText.isBlank()) {
+        if (tier == null) {
             return;
         }
 
+        Component tierComponent =
+                TierComponentFormatter.formatPrimary(tier);
+
         Component originalName = cir.getReturnValue();
 
+        if (originalName == null) {
+            return;
+        }
+
         cir.setReturnValue(
-                Component.literal(tierText + " ")
+                tierComponent.copy()
+                        .append(Component.literal(" "))
                         .append(originalName)
         );
     }
