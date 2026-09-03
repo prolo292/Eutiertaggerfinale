@@ -14,74 +14,166 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class MCPVPProvider implements TierProvider {
 
     private static final String API_URL =
             "https://www.mcpvp.com/tiers/data";
 
+    /*
+     * MCPVP returns the entire player database.
+     *
+     * We cache it so multiple players using the mod
+     * do not create a new request for every username.
+     */
+    private static final Map<String, PlayerTierData> CACHE =
+            new ConcurrentHashMap<>();
+
+    private static final long CACHE_DURATION =
+            120_000L;
+
+    private static volatile long lastUpdate = 0L;
+
+    private static CompletableFuture<Void> loadingFuture;
+
     @Override
-    public CompletableFuture<PlayerTierData> fetchPlayerTiers(String username) {
+    public CompletableFuture<PlayerTierData> fetchPlayerTiers(
+            String username
+    ) {
 
-        return CompletableFuture.supplyAsync(() -> {
+        return loadDataIfNeeded()
+                .thenApply(ignored -> {
 
-            PlayerTierData data = new PlayerTierData(username);
+                    PlayerTierData cached =
+                            CACHE.get(username.toLowerCase());
 
-            try {
-                HttpURLConnection connection =
-                        (HttpURLConnection) URI.create(API_URL)
-                                .toURL()
-                                .openConnection();
-
-                connection.setRequestMethod("GET");
-                connection.setConnectTimeout(5000);
-                connection.setReadTimeout(10000);
-
-                try (InputStreamReader reader = new InputStreamReader(
-                        connection.getInputStream(),
-                        StandardCharsets.UTF_8
-                )) {
-
-                    JsonElement root =
-                            JsonParser.parseReader(reader);
-
-                    if (!root.isJsonArray()) {
-                        return data;
+                    if (cached == null) {
+                        return new PlayerTierData(username);
                     }
 
-                    JsonArray players =
-                            root.getAsJsonArray();
+                    return cached;
+                });
+    }
 
-                    for (JsonElement element : players) {
+    private CompletableFuture<Void> loadDataIfNeeded() {
 
-                        if (!element.isJsonObject()) {
-                            continue;
-                        }
+        long now = System.currentTimeMillis();
 
-                        JsonObject player =
-                                element.getAsJsonObject();
+        if (!CACHE.isEmpty()
+                && now - lastUpdate < CACHE_DURATION) {
 
-                        if (!player.has("name")) {
-                            continue;
-                        }
+            return CompletableFuture.completedFuture(null);
+        }
 
-                        String playerName =
-                                player.get("name").getAsString();
+        synchronized (MCPVPProvider.class) {
 
-                        if (!playerName.equalsIgnoreCase(username)) {
-                            continue;
-                        }
+            now = System.currentTimeMillis();
 
-                        // Ignore retired players
-                        if (player.has("retired")
-                                && player.get("retired").getAsBoolean()) {
-                            return data;
-                        }
+            if (!CACHE.isEmpty()
+                    && now - lastUpdate < CACHE_DURATION) {
 
-                        if (!player.has("kitRanks")
-                                || !player.get("kitRanks").isJsonObject()) {
-                            return data;
-                        }
+                return CompletableFuture.completedFuture(null);
+            }
+
+            if (loadingFuture != null
+                    && !loadingFuture.isDone()) {
+
+                return loadingFuture;
+            }
+
+            loadingFuture = CompletableFuture.runAsync(
+                    MCPVPProvider::downloadMCPVPData
+            );
+
+            return loadingFuture;
+        }
+    }
+
+    private static void downloadMCPVPData() {
+
+        try {
+
+            HttpURLConnection connection =
+                    (HttpURLConnection) URI.create(API_URL)
+                            .toURL()
+                            .openConnection();
+
+            connection.setRequestMethod("GET");
+            connection.setConnectTimeout(5000);
+            connection.setReadTimeout(10000);
+
+            connection.setRequestProperty(
+                    "User-Agent",
+                    "UniversalTierTagger/1.0"
+            );
+
+            int responseCode =
+                    connection.getResponseCode();
+
+            if (responseCode != 200) {
+
+                System.err.println(
+                        "[Universal TierTagger] MCPVP returned HTTP "
+                                + responseCode
+                );
+
+                return;
+            }
+
+            try (InputStreamReader reader =
+                         new InputStreamReader(
+                                 connection.getInputStream(),
+                                 StandardCharsets.UTF_8
+                         )) {
+
+                JsonElement root =
+                        JsonParser.parseReader(reader);
+
+                if (!root.isJsonArray()) {
+                    return;
+                }
+
+                JsonArray players =
+                        root.getAsJsonArray();
+
+                Map<String, PlayerTierData> newCache =
+                        new ConcurrentHashMap<>();
+
+                for (JsonElement element : players) {
+
+                    if (!element.isJsonObject()) {
+                        continue;
+                    }
+
+                    JsonObject player =
+                            element.getAsJsonObject();
+
+                    if (!player.has("name")
+                            || player.get("name").isJsonNull()) {
+
+                        continue;
+                    }
+
+                    /*
+                     * Ignore retired players.
+                     * We only want current MCPVP rankings.
+                     */
+                    if (player.has("retired")
+                            && !player.get("retired").isJsonNull()
+                            && player.get("retired").getAsBoolean()) {
+
+                        continue;
+                    }
+
+                    String playerName =
+                            player.get("name").getAsString();
+
+                    PlayerTierData data =
+                            new PlayerTierData(playerName);
+
+                    if (player.has("kitRanks")
+                            && player.get("kitRanks").isJsonObject()) {
 
                         JsonObject kitRanks =
                                 player.getAsJsonObject("kitRanks");
@@ -89,45 +181,132 @@ public class MCPVPProvider implements TierProvider {
                         for (Map.Entry<String, JsonElement> entry
                                 : kitRanks.entrySet()) {
 
-                            String modeName =
-                                    entry.getKey();
-
                             GameMode mode =
-                                    GameMode.fromString(modeName);
+                                    getMCPVPMode(entry.getKey());
 
                             if (mode == null) {
                                 continue;
                             }
 
-                            if (!entry.getValue().isJsonPrimitive()) {
+                            JsonElement value =
+                                    entry.getValue();
+
+                            if (value == null
+                                    || value.isJsonNull()
+                                    || !value.isJsonPrimitive()) {
+
                                 continue;
                             }
 
                             String tier =
-                                    entry.getValue().getAsString();
+                                    value.getAsString();
 
                             if (tier == null
                                     || tier.isBlank()
-                                    || tier.equalsIgnoreCase("null")) {
+                                    || tier.equalsIgnoreCase("null")
+                                    || tier.equalsIgnoreCase("-")) {
+
                                 continue;
                             }
 
-                            data.setTier(mode, tier);
+                            data.setTier(
+                                    mode,
+                                    tier.trim().toUpperCase()
+                            );
                         }
+                    }
 
-                        return data;
+                    if (data.hasAnyTier()) {
+
+                        newCache.put(
+                                playerName.toLowerCase(),
+                                data
+                        );
                     }
                 }
 
-            } catch (Exception e) {
-                System.err.println(
-                        "[Universal TierTagger] Failed to fetch MCPVP data: "
-                                + e.getMessage()
+                CACHE.clear();
+                CACHE.putAll(newCache);
+
+                lastUpdate = System.currentTimeMillis();
+
+                System.out.println(
+                        "[Universal TierTagger] Loaded "
+                                + CACHE.size()
+                                + " MCPVP player rankings."
                 );
             }
 
-            return data;
-        });
+            connection.disconnect();
+
+        } catch (Exception exception) {
+
+            System.err.println(
+                    "[Universal TierTagger] Failed to download MCPVP data: "
+                            + exception.getMessage()
+            );
+        }
+    }
+
+    /*
+     * MCPVP mode mapping
+     *
+     * sword
+     * shield
+     * pot
+     * early-game
+     * end-game
+     * mace
+     * late-game
+     * spear
+     */
+    private static GameMode getMCPVPMode(
+            String modeName
+    ) {
+
+        if (modeName == null) {
+            return null;
+        }
+
+        String normalized =
+                modeName.toLowerCase()
+                        .trim()
+                        .replace("_", "-")
+                        .replace(" ", "-");
+
+        return switch (normalized) {
+
+            case "sword" ->
+                    GameMode.SWORD;
+
+            case "shield" ->
+                    GameMode.SHIELD;
+
+            case "pot",
+                 "potion" ->
+                    GameMode.POT;
+
+            case "early-game",
+                 "earlygame" ->
+                    GameMode.EARLY_GAME;
+
+            case "end-game",
+                 "endgame" ->
+                    GameMode.END_GAME;
+
+            case "mace" ->
+                    GameMode.MACE;
+
+            case "late-game",
+                 "lategame" ->
+                    GameMode.LATE_GAME;
+
+            case "spear" ->
+                    GameMode.SPEAR;
+
+            default ->
+                    null;
+        };
     }
 
     @Override
