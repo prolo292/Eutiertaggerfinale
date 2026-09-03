@@ -23,7 +23,7 @@ public class PlayerTierTracker {
                 return;
             }
 
-            // Check players every 2 seconds (40 ticks)
+            // Check players every 2 seconds
             tickCounter++;
 
             if (tickCounter < 40) {
@@ -34,12 +34,12 @@ public class PlayerTierTracker {
 
             client.level.players().forEach(player -> {
 
+                // Don't fetch our own player
                 if (player == client.player) {
                     return;
                 }
 
-                String username =
-                        player.getGameProfile().getName();
+                String username = player.getGameProfile().name();
 
                 if (username == null || username.isBlank()) {
                     return;
@@ -52,11 +52,18 @@ public class PlayerTierTracker {
 
     private static void loadPlayerIfNeeded(String username) {
 
-        if (LOADING_PLAYERS.contains(username.toLowerCase())) {
+        if (UniversalTierTaggerClient.CACHE == null
+                || UniversalTierTaggerClient.PROVIDERS == null) {
             return;
         }
 
-        // Check if at least one tierlist is already cached
+        String loadingKey = username.toLowerCase();
+
+        // Already loading
+        if (LOADING_PLAYERS.contains(loadingKey)) {
+            return;
+        }
+
         PlayerTierData european =
                 UniversalTierTaggerClient.CACHE.get(
                         TierlistType.EUROPEAN,
@@ -78,39 +85,51 @@ public class PlayerTierTracker {
                         300
                 );
 
-        // All data already cached
+        // Everything already cached
         if (european != null
                 && mctiers != null
                 && mcpvp != null) {
             return;
         }
 
-        String loadingKey = username.toLowerCase();
-
         if (!LOADING_PLAYERS.add(loadingKey)) {
             return;
         }
 
-        // Fetch all three tierlists
-        UniversalTierTaggerClient.PROVIDERS
-                .fetchPlayerTiers(
+        // Fetch all tierlists
+        var europeanFuture =
+                UniversalTierTaggerClient.PROVIDERS.fetchPlayerTiers(
                         TierlistType.EUROPEAN,
                         username
                 );
 
-        UniversalTierTaggerClient.PROVIDERS
-                .fetchPlayerTiers(
+        var mctiersFuture =
+                UniversalTierTaggerClient.PROVIDERS.fetchPlayerTiers(
                         TierlistType.MCTIERS,
                         username
                 );
 
-        UniversalTierTaggerClient.PROVIDERS
-                .fetchPlayerTiers(
+        var mcpvpFuture =
+                UniversalTierTaggerClient.PROVIDERS.fetchPlayerTiers(
                         TierlistType.MCPVP,
                         username
-                )
-                .whenComplete((result, throwable) -> {
-                    LOADING_PLAYERS.remove(loadingKey);
-                });
+                );
+
+        java.util.concurrent.CompletableFuture.allOf(
+                europeanFuture,
+                mctiersFuture,
+                mcpvpFuture
+        ).whenComplete((result, throwable) -> {
+
+            LOADING_PLAYERS.remove(loadingKey);
+
+            if (throwable != null) {
+                UniversalTierTaggerClient.LOGGER.warn(
+                        "Failed to load tiers for {}",
+                        username,
+                        throwable
+                );
+            }
+        });
     }
 }
