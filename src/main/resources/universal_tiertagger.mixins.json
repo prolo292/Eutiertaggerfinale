@@ -1,0 +1,11 @@
+{
+  "required": true,
+  "package": "com.xss1lent.universaltiertagger.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "PlayerListEntryMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
