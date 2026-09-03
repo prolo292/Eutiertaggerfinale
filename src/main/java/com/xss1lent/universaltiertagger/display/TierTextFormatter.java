@@ -4,68 +4,100 @@ import com.xss1lent.universaltiertagger.UniversalTierTaggerClient;
 
 public class TierTextFormatter {
 
-    public static String getPrimaryText(String username) {
+    /**
+     * Text displayed next to the player's name.
+     *
+     * Example:
+     * [EU] Crystal LT2
+     */
+    public static String formatPrimary(
+            TierDisplayManager.DisplayTier displayTier
+    ) {
 
-        TierDisplayManager.DisplayTier tier =
-                TierDisplayManager.getPrimaryTier(username);
-
-        if (tier == null) {
+        if (displayTier == null) {
             return "";
         }
 
-        return "[" +
-                shortName(tier.tierlist().name()) +
-                " " +
-                tier.mode().getDisplayName() +
-                " " +
-                tier.tier() +
-                "]";
+        StringBuilder builder = new StringBuilder();
+
+        if (UniversalTierTaggerClient.CONFIG.showTierlistLogo) {
+
+            builder.append("[")
+                    .append(getTierlistShortName(
+                            displayTier.tierlist().name()
+                    ))
+                    .append("] ");
+        }
+
+        if (UniversalTierTaggerClient.CONFIG.showModeIcon) {
+
+            /*
+             * Temporary text representation.
+             *
+             * Later this will be replaced by
+             * actual Minecraft textures/icons.
+             */
+            builder.append("[")
+                    .append(displayTier.mode().getDisplayName())
+                    .append("] ");
+        }
+
+        builder.append(displayTier.tier());
+
+        return builder.toString();
     }
 
-    public static String getSecondaryText(String username) {
+    /**
+     * Text displayed above the player's nametag.
+     */
+    public static String formatSecondary(
+            TierDisplayManager.DisplayTier displayTier
+    ) {
 
-        TierDisplayManager.DisplayTier tier =
-                TierDisplayManager.getSecondaryTier(username);
-
-        if (tier == null) {
+        if (displayTier == null) {
             return "";
         }
 
-        return "[" +
-                shortName(tier.tierlist().name()) +
-                " " +
-                tier.mode().getDisplayName() +
-                " " +
-                tier.tier() +
-                "]";
+        StringBuilder builder = new StringBuilder();
+
+        if (UniversalTierTaggerClient.CONFIG.showTierlistLogo) {
+
+            builder.append("[")
+                    .append(getTierlistShortName(
+                            displayTier.tierlist().name()
+                    ))
+                    .append("] ");
+        }
+
+        if (UniversalTierTaggerClient.CONFIG.showModeIcon) {
+
+            builder.append("[")
+                    .append(displayTier.mode().getDisplayName())
+                    .append("] ");
+        }
+
+        builder.append(displayTier.tier());
+
+        return builder.toString();
     }
 
-    public static String formatName(String username) {
+    private static String getTierlistShortName(
+            String tierlist
+    ) {
 
-        if (UniversalTierTaggerClient.CONFIG == null) {
-            return username;
+        if (tierlist == null) {
+            return "UNKNOWN";
         }
 
-        if (!UniversalTierTaggerClient.CONFIG.showPrimary) {
-            return username;
-        }
+        return switch (tierlist.toUpperCase()) {
 
-        String tier = getPrimaryText(username);
-
-        if (tier.isEmpty()) {
-            return username;
-        }
-
-        return username + " " + tier;
-    }
-
-    private static String shortName(String name) {
-
-        return switch (name) {
             case "EUROPEAN" -> "EU";
+
             case "MCTIERS" -> "MCT";
+
             case "MCPVP" -> "MCPVP";
-            default -> name;
+
+            default -> tierlist;
         };
     }
 }
