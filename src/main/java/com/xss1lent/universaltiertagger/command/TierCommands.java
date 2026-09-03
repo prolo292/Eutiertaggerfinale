@@ -7,7 +7,7 @@ import com.xss1lent.universaltiertagger.data.PlayerTierData;
 import com.xss1lent.universaltiertagger.data.TierlistType;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -46,12 +46,11 @@ public class TierCommands {
             return;
         }
 
-        var client =
-                net.minecraft.client.MinecraftClient.getInstance();
+        var client = net.minecraft.client.Minecraft.getInstance();
 
         if (client.player != null) {
-            client.player.sendMessage(
-                    Text.literal("§6[EU Tiers] §eSearching tiers for §f" + username + "§e..."),
+            client.player.displayClientMessage(
+                    Component.literal("[EU Tiers] Searching tiers for " + username + "..."),
                     false
             );
         }
@@ -74,68 +73,65 @@ public class TierCommands {
                         username
                 );
 
-        CompletableFuture.allOf(
-                european,
-                mctiers,
-                mcpvp
-        ).thenRun(() -> {
+        CompletableFuture.allOf(european, mctiers, mcpvp)
+                .thenRun(() -> {
 
-            try {
+                    try {
 
-                PlayerTierData euData = european.join();
-                PlayerTierData mcTiersData = mctiers.join();
-                PlayerTierData mcpvpData = mcpvp.join();
+                        PlayerTierData euData = european.join();
+                        PlayerTierData mcTiersData = mctiers.join();
+                        PlayerTierData mcpvpData = mcpvp.join();
 
-                client.execute(() -> {
+                        client.execute(() -> {
 
-                    if (client.player == null) {
-                        return;
+                            if (client.player == null) {
+                                return;
+                            }
+
+                            client.player.displayClientMessage(
+                                    Component.literal(""),
+                                    false
+                            );
+
+                            client.player.displayClientMessage(
+                                    Component.literal("================================"),
+                                    false
+                            );
+
+                            client.player.displayClientMessage(
+                                    Component.literal("TIERS FOR " + username),
+                                    false
+                            );
+
+                            displayTierlist(
+                                    "EUROPEAN TIERS",
+                                    euData
+                            );
+
+                            displayTierlist(
+                                    "MC TIERS",
+                                    mcTiersData
+                            );
+
+                            displayTierlist(
+                                    "MCPVP BETA",
+                                    mcpvpData
+                            );
+
+                            client.player.displayClientMessage(
+                                    Component.literal("================================"),
+                                    false
+                            );
+                        });
+
+                    } catch (Exception exception) {
+
+                        UniversalTierTaggerClient.LOGGER.error(
+                                "Failed to fetch player tiers",
+                                exception
+                        );
                     }
-
-                    client.player.sendMessage(
-                            Text.literal(""),
-                            false
-                    );
-
-                    client.player.sendMessage(
-                            Text.literal("§6§l════════════════════════════"),
-                            false
-                    );
-
-                    client.player.sendMessage(
-                            Text.literal("§e§lTIERS FOR §f§l" + username),
-                            false
-                    );
-
-                    displayTierlist(
-                            "§b§lEUROPEAN TIERS",
-                            euData
-                    );
-
-                    displayTierlist(
-                            "§a§lMC TIERS",
-                            mcTiersData
-                    );
-
-                    displayTierlist(
-                            "§d§lMCPVP §f§lBETA",
-                            mcpvpData
-                    );
-
-                    client.player.sendMessage(
-                            Text.literal("§6§l════════════════════════════"),
-                            false
-                    );
                 });
-
-            } catch (Exception exception) {
-
-                UniversalTierTaggerClient.LOGGER.error(
-                        "Failed to fetch player tiers",
-                        exception
-                );
-            }
-        });
     }
 
     private static void displayTierlist(
@@ -143,27 +139,26 @@ public class TierCommands {
             PlayerTierData data
     ) {
 
-        var client =
-                net.minecraft.client.MinecraftClient.getInstance();
+        var client = net.minecraft.client.Minecraft.getInstance();
 
         if (client.player == null) {
             return;
         }
 
-        client.player.sendMessage(
-                Text.literal(""),
+        client.player.displayClientMessage(
+                Component.literal(""),
                 false
         );
 
-        client.player.sendMessage(
-                Text.literal(title),
+        client.player.displayClientMessage(
+                Component.literal(title),
                 false
         );
 
         if (data == null || !data.hasAnyTier()) {
 
-            client.player.sendMessage(
-                    Text.literal("§7No tiers found."),
+            client.player.displayClientMessage(
+                    Component.literal("  No tiers found."),
                     false
             );
 
@@ -176,43 +171,15 @@ public class TierCommands {
             GameMode mode = entry.getKey();
             String tier = entry.getValue();
 
-            client.player.sendMessage(
-                    Text.literal(
-                            " §8• §f"
+            client.player.displayClientMessage(
+                    Component.literal(
+                            "  • "
                                     + mode.getDisplayName()
                                     + ": "
-                                    + getTierColor(tier)
                                     + tier
                     ),
                     false
             );
         }
-    }
-
-    private static String getTierColor(String tier) {
-
-        if (tier == null) {
-            return "§7";
-        }
-
-        return switch (tier.toUpperCase()) {
-
-            case "HT1" -> "§6";
-            case "LT1" -> "§e";
-
-            case "HT2" -> "§a";
-            case "LT2" -> "§2";
-
-            case "HT3" -> "§b";
-            case "LT3" -> "§3";
-
-            case "HT4" -> "§9";
-            case "LT4" -> "§1";
-
-            case "HT5" -> "§d";
-            case "LT5" -> "§5";
-
-            default -> "§7";
-        };
     }
 }
