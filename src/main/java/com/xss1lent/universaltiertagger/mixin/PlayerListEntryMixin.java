@@ -10,4 +10,17 @@ public abstract class PlayerListEntryMixin {
 
     @Shadow
     public abstract GameProfile getProfile();
+
+    public String universalTierTagger$getUsername() {
+
+        GameProfile profile = getProfile();
+
+        if (profile == null) {
+            return "";
+        }
+
+        String name = profile.name();
+
+        return name != null ? name : "";
+    }
 }
