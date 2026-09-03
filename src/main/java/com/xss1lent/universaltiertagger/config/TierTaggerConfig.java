@@ -13,11 +13,37 @@ import java.util.Map;
 
 public class TierTaggerConfig {
 
-    public String activeTierlist = "EUROPEAN";
+    /*
+     * PRIMARY TIER
+     * Displayed next to the player's name.
+     */
 
-    public String displayType = "HIGHEST";
+    public String primaryTierlist = "EUROPEAN";
 
-    public String specificMode = "CRYSTAL";
+    public String primaryDisplayType = "HIGHEST";
+
+    public String primarySpecificMode = "CRYSTAL";
+
+    public boolean showPrimary = true;
+
+
+    /*
+     * SECONDARY TIER
+     * Displayed above the player's head.
+     */
+
+    public String secondaryTierlist = "MCPVP";
+
+    public String secondaryDisplayType = "HIGHEST";
+
+    public String secondarySpecificMode = "SWORD";
+
+    public boolean showSecondary = true;
+
+
+    /*
+     * GENERAL DISPLAY SETTINGS
+     */
 
     public boolean showInTab = true;
 
@@ -33,7 +59,7 @@ public class TierTaggerConfig {
 
     public boolean useFallbackTierlists = false;
 
-    public int refreshIntervalSeconds = 120;
+    public int refreshIntervalSeconds = 300;
 
     public int iconSize = 16;
 
@@ -41,11 +67,27 @@ public class TierTaggerConfig {
 
     public Map<String, String> tierColors = createDefaultTierColors();
 
+
+    /*
+     * LEGACY SETTINGS
+     *
+     * Kept temporarily so old config files don't break.
+     */
+
+    public String activeTierlist = null;
+
+    public String displayType = null;
+
+    public String specificMode = null;
+
+
     private static final Gson GSON = new GsonBuilder()
             .setPrettyPrinting()
             .create();
 
+
     private static Map<String, String> createDefaultTierColors() {
+
         Map<String, String> colors = new LinkedHashMap<>();
 
         colors.put("HT1", "#FFD700");
@@ -68,29 +110,39 @@ public class TierTaggerConfig {
         return colors;
     }
 
+
     private static Path getConfigPath() {
+
         return FabricLoader.getInstance()
                 .getConfigDir()
                 .resolve("universal-tiertagger.json");
     }
 
+
     public static TierTaggerConfig load() {
+
         Path path = getConfigPath();
 
         try {
+
             if (Files.exists(path)) {
+
                 TierTaggerConfig config = GSON.fromJson(
                         Files.readString(path),
                         TierTaggerConfig.class
                 );
 
                 if (config != null) {
+
                     config.fixMissingValues();
                     config.save();
+
                     return config;
                 }
             }
+
         } catch (Exception exception) {
+
             UniversalTierTaggerClient.LOGGER.error(
                     "Failed to load TierTagger configuration",
                     exception
@@ -103,31 +155,78 @@ public class TierTaggerConfig {
         return config;
     }
 
+
     private void fixMissingValues() {
+
         if (tierColors == null) {
             tierColors = createDefaultTierColors();
         }
 
-        Map<String, String> defaults = createDefaultTierColors();
+        Map<String, String> defaults =
+                createDefaultTierColors();
 
-        for (Map.Entry<String, String> entry : defaults.entrySet()) {
-            tierColors.putIfAbsent(entry.getKey(), entry.getValue());
+        for (Map.Entry<String, String> entry
+                : defaults.entrySet()) {
+
+            tierColors.putIfAbsent(
+                    entry.getKey(),
+                    entry.getValue()
+            );
         }
 
-        if (activeTierlist == null) {
-            activeTierlist = "EUROPEAN";
+
+        /*
+         * Migrate old configuration
+         */
+
+        if (primaryTierlist == null) {
+
+            primaryTierlist =
+                    activeTierlist != null
+                            ? activeTierlist
+                            : "EUROPEAN";
         }
 
-        if (displayType == null) {
-            displayType = "HIGHEST";
+        if (primaryDisplayType == null) {
+
+            primaryDisplayType =
+                    displayType != null
+                            ? displayType
+                            : "HIGHEST";
         }
 
-        if (specificMode == null) {
-            specificMode = "CRYSTAL";
+        if (primarySpecificMode == null) {
+
+            primarySpecificMode =
+                    specificMode != null
+                            ? specificMode
+                            : "CRYSTAL";
         }
 
-        if (refreshIntervalSeconds < 20) {
-            refreshIntervalSeconds = 20;
+
+        /*
+         * Secondary defaults
+         */
+
+        if (secondaryTierlist == null) {
+            secondaryTierlist = "MCPVP";
+        }
+
+        if (secondaryDisplayType == null) {
+            secondaryDisplayType = "HIGHEST";
+        }
+
+        if (secondarySpecificMode == null) {
+            secondarySpecificMode = "SWORD";
+        }
+
+
+        /*
+         * Safety limits
+         */
+
+        if (refreshIntervalSeconds < 60) {
+            refreshIntervalSeconds = 60;
         }
 
         if (iconSize < 8) {
@@ -135,15 +234,22 @@ public class TierTaggerConfig {
         }
     }
 
+
     public void save() {
+
         try {
-            Files.createDirectories(getConfigPath().getParent());
+
+            Files.createDirectories(
+                    getConfigPath().getParent()
+            );
 
             Files.writeString(
                     getConfigPath(),
                     GSON.toJson(this)
             );
+
         } catch (IOException exception) {
+
             UniversalTierTaggerClient.LOGGER.error(
                     "Failed to save TierTagger configuration",
                     exception
