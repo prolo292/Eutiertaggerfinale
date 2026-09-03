@@ -115,21 +115,58 @@ public class PlayerTierTracker {
                         username
                 );
 
-        java.util.concurrent.CompletableFuture.allOf(
-                europeanFuture,
-                mctiersFuture,
-                mcpvpFuture
-        ).whenComplete((result, throwable) -> {
+  java.util.concurrent.CompletableFuture.allOf(
+        europeanFuture,
+        mctiersFuture,
+        mcpvpFuture
+).whenComplete((result, throwable) -> {
 
-            LOADING_PLAYERS.remove(loadingKey);
+    try {
 
-            if (throwable != null) {
-                UniversalTierTaggerClient.LOGGER.warn(
-                        "Failed to load tiers for {}",
-                        username,
-                        throwable
-                );
-            }
-        });
+        if (throwable == null) {
+
+            PlayerTierData europeanData = europeanFuture.join();
+            PlayerTierData mctiersData = mctiersFuture.join();
+            PlayerTierData mcpvpData = mcpvpFuture.join();
+
+            UniversalTierTaggerClient.CACHE.put(
+                    TierlistType.EUROPEAN,
+                    username,
+                    europeanData
+            );
+
+            UniversalTierTaggerClient.CACHE.put(
+                    TierlistType.MCTIERS,
+                    username,
+                    mctiersData
+            );
+
+            UniversalTierTaggerClient.CACHE.put(
+                    TierlistType.MCPVP,
+                    username,
+                    mcpvpData
+            );
+        }
+
+    } catch (Exception exception) {
+
+        UniversalTierTaggerClient.LOGGER.warn(
+                "Failed to cache tiers for {}",
+                username,
+                exception
+        );
+
+    } finally {
+
+        LOADING_PLAYERS.remove(loadingKey);
     }
-}
+
+    if (throwable != null) {
+
+        UniversalTierTaggerClient.LOGGER.warn(
+                "Failed to load tiers for {}",
+                username,
+                throwable
+        );
+    }
+});
