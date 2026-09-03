@@ -2,23 +2,32 @@
   "schemaVersion": 1,
   "id": "universal_tiertagger",
   "version": "${version}",
+
   "name": "Universal TierTagger",
-  "description": "A customizable Minecraft tier tagger supporting multiple tierlists.",
+  "description": "Displays PvP tiers from multiple tierlists above player names and in the tab list.",
   "authors": [
-    "XsS1lent"
+    "xss1lent"
   ],
   "contact": {},
+
   "license": "All Rights Reserved",
   "icon": "assets/universal_tiertagger/icon.png",
+
   "environment": "client",
+
   "entrypoints": {
     "client": [
       "com.xss1lent.universaltiertagger.UniversalTierTaggerClient"
     ]
   },
+
+  "mixins": [
+    "universal_tiertagger.mixins.json"
+  ],
+
   "depends": {
     "fabricloader": ">=0.17.0",
-    "minecraft": "~1.21.11",
+    "minecraft": "1.21.11",
     "java": ">=21",
     "fabric-api": "*"
   }
