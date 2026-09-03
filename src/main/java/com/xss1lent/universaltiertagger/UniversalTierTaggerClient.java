@@ -5,6 +5,7 @@ import com.xss1lent.universaltiertagger.command.TierCommands;
 import com.xss1lent.universaltiertagger.config.TierTaggerConfig;
 import com.xss1lent.universaltiertagger.keybind.KeyBindings;
 import com.xss1lent.universaltiertagger.provider.TierProviderManager;
+import com.xss1lent.universaltiertagger.tracker.PlayerTierTracker;
 import net.fabricmc.api.ClientModInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,8 +28,13 @@ public class UniversalTierTaggerClient implements ClientModInitializer {
         CACHE = new TierCache();
         PROVIDERS = new TierProviderManager();
 
+        // Register keybinds
         KeyBindings.register();
 
+        // Automatically detect visible players and load their tiers
+        PlayerTierTracker.register();
+
+        // Register client commands
         TierCommands.register();
 
         LOGGER.info("Universal TierTagger initialized!");
