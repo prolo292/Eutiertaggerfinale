@@ -1,1 +1,74 @@
-
+{
+  "providers": [
+    {
+      "type": "bitmap",
+      "file": "universal_tiertagger:icons/sword.png",
+      "height": 16,
+      "ascent": 14,
+      "chars": ["\uE001"]
+    },
+    {
+      "type": "bitmap",
+      "file": "universal_tiertagger:icons/axe.png",
+      "height": 16,
+      "ascent": 14,
+      "chars": ["\uE002"]
+    },
+    {
+      "type": "bitmap",
+      "file": "universal_tiertagger:icons/pot.png",
+      "height": 16,
+      "ascent": 14,
+      "chars": ["\uE003"]
+    },
+    {
+      "type": "bitmap",
+      "file": "universal_tiertagger:icons/vanilla.png",
+      "height": 16,
+      "ascent": 14,
+      "chars": ["\uE004"]
+    },
+    {
+      "type": "bitmap",
+      "file": "universal_tiertagger:icons/smp.png",
+      "height": 16,
+      "ascent": 14,
+      "chars": ["\uE005"]
+    },
+    {
+      "type": "bitmap",
+      "file": "universal_tiertagger:icons/nethop.png",
+      "height": 16,
+      "ascent": 14,
+      "chars": ["\uE006"]
+    },
+    {
+      "type": "bitmap",
+      "file": "universal_tiertagger:icons/uhc.png",
+      "height": 16,
+      "ascent": 14,
+      "chars": ["\uE007"]
+    },
+    {
+      "type": "bitmap",
+      "file": "universal_tiertagger:icons/mace.png",
+      "height": 16,
+      "ascent": 14,
+      "chars": ["\uE008"]
+    },
+    {
+      "type": "bitmap",
+      "file": "universal_tiertagger:icons/crystal.png",
+      "height": 16,
+      "ascent": 14,
+      "chars": ["\uE009"]
+    },
+    {
+      "type": "bitmap",
+      "file": "universal_tiertagger:icons/spear.png",
+      "height": 16,
+      "ascent": 14,
+      "chars": ["\uE010"]
+    }
+  ]
+}
