@@ -4,8 +4,7 @@
   "compatibilityLevel": "JAVA_21",
   "client": [
     "PlayerListEntryMixin",
-    "PlayerTabOverlayMixin",
-    "PlayerRendererMixin"
+    "PlayerTabOverlayMixin"
   ],
   "injectors": {
     "defaultRequire": 1
