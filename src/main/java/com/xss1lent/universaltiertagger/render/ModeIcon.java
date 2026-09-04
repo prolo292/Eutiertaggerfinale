@@ -28,13 +28,12 @@ public class ModeIcon {
             case MACE -> "mace";
             case CRYSTAL -> "crystal";
 
+            default -> "crystal";
         };
     }
 
     /**
      * MCPVP mode aliases.
-     *
-     * These modes reuse existing icons.
      */
     public static String getMCPVPIcon(String modeName) {
 
@@ -48,19 +47,14 @@ public class ModeIcon {
 
         return switch (mode) {
 
-            // Shield uses Axe icon
             case "shield" -> "axe";
 
-            // End Fight uses Vanilla icon
             case "endfight" -> "vanilla";
 
-            // CPVP Late Game uses Crystal icon
             case "cpvplategame" -> "crystal";
 
-            // SMP Early uses UHC icon
             case "smpearly" -> "uhc";
 
-            // Spear will use its own icon later
             case "spear" -> "spear";
 
             default -> "crystal";
