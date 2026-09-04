@@ -1,11 +1,15 @@
 package com.xss1lent.universaltiertagger.display;
 
 import com.xss1lent.universaltiertagger.UniversalTierTaggerClient;
+import com.xss1lent.universaltiertagger.render.ModeIcon;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
 
 public class TierComponentFormatter {
+
+    private static final String ICON_FONT =
+            "universal_tiertagger:icons";
 
     public static Component formatPrimary(
             TierDisplayManager.DisplayTier displayTier
@@ -29,6 +33,7 @@ public class TierComponentFormatter {
 
         Component result = Component.empty();
 
+        // Tierlist name
         if (UniversalTierTaggerClient.CONFIG.showTierlistLogo) {
 
             result = result.copy().append(
@@ -40,16 +45,26 @@ public class TierComponentFormatter {
             );
         }
 
+        // Mode icon
         if (UniversalTierTaggerClient.CONFIG.showModeIcon) {
 
-            result = result.copy().append(
-                    Component.literal(
-                            "[" + displayTier.mode().getDisplayName()
-                                    + "] "
-                    )
-            );
+            String icon =
+                    ModeIcon.getIcon(displayTier.mode());
+
+            Component iconComponent =
+                    Component.literal(icon)
+                            .setStyle(
+                                    Style.EMPTY.withFont(
+                                            ICON_FONT
+                                    )
+                            );
+
+            result = result.copy()
+                    .append(iconComponent)
+                    .append(Component.literal(" "));
         }
 
+        // Tier text with its color
         String tier = displayTier.tier();
 
         String hexColor =
@@ -58,7 +73,9 @@ public class TierComponentFormatter {
         TextColor color =
                 TextColor.parseColor(hexColor)
                         .result()
-                        .orElse(TextColor.fromRgb(0xFFFFFF));
+                        .orElse(
+                                TextColor.fromRgb(0xFFFFFF)
+                        );
 
         Component tierComponent =
                 Component.literal(tier)
@@ -66,10 +83,13 @@ public class TierComponentFormatter {
                                 Style.EMPTY.withColor(color)
                         );
 
-        return result.copy().append(tierComponent);
+        return result.copy()
+                .append(tierComponent);
     }
 
-    private static String getTierlistShortName(String tierlist) {
+    private static String getTierlistShortName(
+            String tierlist
+    ) {
 
         if (tierlist == null) {
             return "UNKNOWN";
