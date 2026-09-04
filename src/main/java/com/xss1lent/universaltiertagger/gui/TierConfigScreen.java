@@ -16,6 +16,13 @@ public class TierConfigScreen extends Screen {
     private Button displayTypeButton;
     private Button modeButton;
 
+    private Button tabButton;
+    private Button nametagButton;
+    private Button modeIconButton;
+    private Button logoButton;
+    private Button unrankedButton;
+    private Button hideOwnButton;
+
     private static final String[] TIERLISTS = {
             "EUROPEAN",
             "MCTIERS",
@@ -43,83 +50,161 @@ public class TierConfigScreen extends Screen {
     protected void init() {
 
         int centerX = this.width / 2;
-        int centerY = this.height / 2;
+        int startY = this.height / 2 - 135;
 
-        primaryButton = this.addRenderableWidget(
-                Button.builder(
-                        Component.literal(""),
-                        button -> {
-                            cyclePrimaryTierlist();
-                            updateButtons();
-                        }
-                ).bounds(centerX - 110, centerY - 85, 220, 20).build()
+        primaryButton = addButton(
+                centerX,
+                startY,
+                button -> {
+                    cyclePrimaryTierlist();
+                    updateButtons();
+                }
         );
 
-        secondaryButton = this.addRenderableWidget(
-                Button.builder(
-                        Component.literal(""),
-                        button -> {
-                            cycleSecondaryTierlist();
-                            updateButtons();
-                        }
-                ).bounds(centerX - 110, centerY - 55, 220, 20).build()
+        secondaryButton = addButton(
+                centerX,
+                startY + 23,
+                button -> {
+                    cycleSecondaryTierlist();
+                    updateButtons();
+                }
         );
 
-        secondaryToggleButton = this.addRenderableWidget(
-                Button.builder(
-                        Component.literal(""),
-                        button -> {
-                            UniversalTierTaggerClient.CONFIG.showSecondaryTierlist =
-                                    !UniversalTierTaggerClient.CONFIG.showSecondaryTierlist;
+        secondaryToggleButton = addButton(
+                centerX,
+                startY + 46,
+                button -> {
+                    UniversalTierTaggerClient.CONFIG.showSecondaryTierlist =
+                            !UniversalTierTaggerClient.CONFIG.showSecondaryTierlist;
 
-                            updateButtons();
-                        }
-                ).bounds(centerX - 110, centerY - 25, 220, 20).build()
+                    updateButtons();
+                }
         );
 
-        displayTypeButton = this.addRenderableWidget(
-                Button.builder(
-                        Component.literal(""),
-                        button -> {
+        displayTypeButton = addButton(
+                centerX,
+                startY + 69,
+                button -> {
 
-                            if ("HIGHEST".equalsIgnoreCase(
-                                    UniversalTierTaggerClient.CONFIG.displayType
-                            )) {
+                    if ("HIGHEST".equalsIgnoreCase(
+                            UniversalTierTaggerClient.CONFIG.displayType
+                    )) {
+                        UniversalTierTaggerClient.CONFIG.displayType = "SPECIFIC";
+                    } else {
+                        UniversalTierTaggerClient.CONFIG.displayType = "HIGHEST";
+                    }
 
-                                UniversalTierTaggerClient.CONFIG.displayType =
-                                        "SPECIFIC";
-
-                            } else {
-
-                                UniversalTierTaggerClient.CONFIG.displayType =
-                                        "HIGHEST";
-                            }
-
-                            updateButtons();
-                        }
-                ).bounds(centerX - 110, centerY + 5, 220, 20).build()
+                    updateButtons();
+                }
         );
 
-        modeButton = this.addRenderableWidget(
-                Button.builder(
-                        Component.literal(""),
-                        button -> {
-                            cycleSpecificMode();
-                            updateButtons();
-                        }
-                ).bounds(centerX - 110, centerY + 35, 220, 20).build()
+        modeButton = addButton(
+                centerX,
+                startY + 92,
+                button -> {
+                    cycleSpecificMode();
+                    updateButtons();
+                }
+        );
+
+        tabButton = addButton(
+                centerX,
+                startY + 115,
+                button -> {
+                    UniversalTierTaggerClient.CONFIG.showInTab =
+                            !UniversalTierTaggerClient.CONFIG.showInTab;
+
+                    updateButtons();
+                }
+        );
+
+        nametagButton = addButton(
+                centerX,
+                startY + 138,
+                button -> {
+                    UniversalTierTaggerClient.CONFIG.showNametags =
+                            !UniversalTierTaggerClient.CONFIG.showNametags;
+
+                    updateButtons();
+                }
+        );
+
+        modeIconButton = addButton(
+                centerX,
+                startY + 161,
+                button -> {
+                    UniversalTierTaggerClient.CONFIG.showModeIcon =
+                            !UniversalTierTaggerClient.CONFIG.showModeIcon;
+
+                    updateButtons();
+                }
+        );
+
+        logoButton = addButton(
+                centerX,
+                startY + 184,
+                button -> {
+                    UniversalTierTaggerClient.CONFIG.showTierlistLogo =
+                            !UniversalTierTaggerClient.CONFIG.showTierlistLogo;
+
+                    updateButtons();
+                }
+        );
+
+        unrankedButton = addButton(
+                centerX,
+                startY + 207,
+                button -> {
+                    UniversalTierTaggerClient.CONFIG.showUnranked =
+                            !UniversalTierTaggerClient.CONFIG.showUnranked;
+
+                    updateButtons();
+                }
+        );
+
+        hideOwnButton = addButton(
+                centerX,
+                startY + 230,
+                button -> {
+                    UniversalTierTaggerClient.CONFIG.hideOwnTag =
+                            !UniversalTierTaggerClient.CONFIG.hideOwnTag;
+
+                    updateButtons();
+                }
         );
 
         this.addRenderableWidget(
                 Button.builder(
                         Component.literal("Done"),
-                        button -> {
-                            saveAndClose();
-                        }
-                ).bounds(centerX - 110, centerY + 75, 220, 20).build()
+                        button -> saveAndClose()
+                ).bounds(
+                        centerX - 110,
+                        startY + 258,
+                        220,
+                        20
+                ).build()
         );
 
         updateButtons();
+    }
+
+    private Button addButton(
+            int centerX,
+            int y,
+            Button.OnPress action
+    ) {
+
+        return this.addRenderableWidget(
+                Button.builder(
+                        Component.literal(""),
+                        action
+                ).bounds(
+                        centerX - 110,
+                        y,
+                        220,
+                        20
+                ).build()
+        );
     }
 
     private void cyclePrimaryTierlist() {
@@ -152,10 +237,7 @@ public class TierConfigScreen extends Screen {
                 );
     }
 
-    private String getNext(
-            String[] values,
-            String current
-    ) {
+    private String getNext(String[] values, String current) {
 
         for (int i = 0; i < values.length; i++) {
 
@@ -167,49 +249,86 @@ public class TierConfigScreen extends Screen {
         return values[0];
     }
 
+    private String onOff(boolean value) {
+        return value ? "ON" : "OFF";
+    }
+
     private void updateButtons() {
 
-        primaryButton.setMessage(
-                Component.literal(
-                        "Primary Tierlist: "
-                                + UniversalTierTaggerClient.CONFIG.primaryTierlist
-                )
+        primaryButton.setMessage(Component.literal(
+                "Primary Tierlist: "
+                        + UniversalTierTaggerClient.CONFIG.primaryTierlist
+        ));
+
+        secondaryButton.setMessage(Component.literal(
+                "Secondary Tierlist: "
+                        + UniversalTierTaggerClient.CONFIG.secondaryTierlist
+        ));
+
+        secondaryToggleButton.setMessage(Component.literal(
+                "Show Secondary: "
+                        + onOff(
+                                UniversalTierTaggerClient.CONFIG
+                                        .showSecondaryTierlist
+                        )
+        ));
+
+        displayTypeButton.setMessage(Component.literal(
+                "Display: "
+                        + UniversalTierTaggerClient.CONFIG.displayType
+        ));
+
+        modeButton.setMessage(Component.literal(
+                "Specific Mode: "
+                        + UniversalTierTaggerClient.CONFIG.specificMode
+        ));
+
+        modeButton.active = "SPECIFIC".equalsIgnoreCase(
+                UniversalTierTaggerClient.CONFIG.displayType
         );
 
-        secondaryButton.setMessage(
-                Component.literal(
-                        "Secondary Tierlist: "
-                                + UniversalTierTaggerClient.CONFIG.secondaryTierlist
-                )
-        );
+        tabButton.setMessage(Component.literal(
+                "Show in Tab: "
+                        + onOff(
+                                UniversalTierTaggerClient.CONFIG.showInTab
+                        )
+        ));
 
-        secondaryToggleButton.setMessage(
-                Component.literal(
-                        "Show Secondary: "
-                                + (UniversalTierTaggerClient.CONFIG.showSecondaryTierlist
-                                ? "ON"
-                                : "OFF")
-                )
-        );
+        nametagButton.setMessage(Component.literal(
+                "Show Nametags: "
+                        + onOff(
+                                UniversalTierTaggerClient.CONFIG.showNametags
+                        )
+        ));
 
-        displayTypeButton.setMessage(
-                Component.literal(
-                        "Display: "
-                                + UniversalTierTaggerClient.CONFIG.displayType
-                )
-        );
+        modeIconButton.setMessage(Component.literal(
+                "Show Mode Icon: "
+                        + onOff(
+                                UniversalTierTaggerClient.CONFIG.showModeIcon
+                        )
+        ));
 
-        modeButton.setMessage(
-                Component.literal(
-                        "Specific Mode: "
-                                + UniversalTierTaggerClient.CONFIG.specificMode
-                )
-        );
+        logoButton.setMessage(Component.literal(
+                "Show Tierlist Logo: "
+                        + onOff(
+                                UniversalTierTaggerClient.CONFIG
+                                        .showTierlistLogo
+                        )
+        ));
 
-        modeButton.active =
-                "SPECIFIC".equalsIgnoreCase(
-                        UniversalTierTaggerClient.CONFIG.displayType
-                );
+        unrankedButton.setMessage(Component.literal(
+                "Show Unranked: "
+                        + onOff(
+                                UniversalTierTaggerClient.CONFIG.showUnranked
+                        )
+        ));
+
+        hideOwnButton.setMessage(Component.literal(
+                "Hide Own Tag: "
+                        + onOff(
+                                UniversalTierTaggerClient.CONFIG.hideOwnTag
+                        )
+        ));
     }
 
     private void saveAndClose() {
@@ -240,24 +359,19 @@ public class TierConfigScreen extends Screen {
                 this.font,
                 "Universal TierTagger",
                 this.width / 2,
-                this.height / 2 - 125,
+                15,
                 0xFFFFFF
         );
 
         graphics.drawCenteredString(
                 this.font,
-                "Click buttons to change settings",
+                "Press buttons to configure your tier display",
                 this.width / 2,
-                this.height / 2 - 108,
+                30,
                 0xAAAAAA
         );
 
-        super.render(
-                graphics,
-                mouseX,
-                mouseY,
-                delta
-        );
+        super.render(graphics, mouseX, mouseY, delta);
     }
 
     @Override
