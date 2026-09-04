@@ -8,6 +8,11 @@ import com.xss1lent.universaltiertagger.data.TierlistType;
 public class TierDisplayManager {
 
     public static DisplayTier getPrimaryTier(String username) {
+
+        if (UniversalTierTaggerClient.CONFIG == null) {
+            return null;
+        }
+
         return getTierForTierlist(
                 UniversalTierTaggerClient.CONFIG.primaryTierlist,
                 username
@@ -16,7 +21,8 @@ public class TierDisplayManager {
 
     public static DisplayTier getSecondaryTier(String username) {
 
-        if (!UniversalTierTaggerClient.CONFIG.showSecondaryTierlist) {
+        if (UniversalTierTaggerClient.CONFIG == null
+                || !UniversalTierTaggerClient.CONFIG.showSecondaryTierlist) {
             return null;
         }
 
@@ -32,8 +38,11 @@ public class TierDisplayManager {
     ) {
 
         if (tierlistName == null
+                || tierlistName.isBlank()
                 || username == null
-                || UniversalTierTaggerClient.CACHE == null) {
+                || username.isBlank()
+                || UniversalTierTaggerClient.CACHE == null
+                || UniversalTierTaggerClient.CONFIG == null) {
             return null;
         }
 
@@ -41,9 +50,9 @@ public class TierDisplayManager {
 
         try {
             type = TierlistType.valueOf(
-                    tierlistName.toUpperCase()
+                    tierlistName.trim().toUpperCase()
             );
-        } catch (Exception exception) {
+        } catch (IllegalArgumentException exception) {
             return null;
         }
 
@@ -58,40 +67,49 @@ public class TierDisplayManager {
             return null;
         }
 
-        String displayType =
-                UniversalTierTaggerClient.CONFIG.displayType;
-
-        if ("HIGHEST".equalsIgnoreCase(displayType)) {
+        if ("HIGHEST".equalsIgnoreCase(
+                UniversalTierTaggerClient.CONFIG.displayType
+        )) {
 
             String tier = data.getHighestTier();
             GameMode mode = data.getHighestTierMode();
 
-            if (tier == null || mode == null) {
+            if (!isValidTier(tier) || mode == null) {
                 return null;
             }
 
-            return new DisplayTier(
-                    type,
-                    mode,
-                    tier
-            );
+            return new DisplayTier(type, mode, tier);
         }
 
         GameMode mode = GameMode.fromString(
                 UniversalTierTaggerClient.CONFIG.specificMode
         );
 
-        String tier = data.getTier(mode);
-
-        if (tier == null) {
+        if (mode == null) {
             return null;
         }
 
-        return new DisplayTier(
-                type,
-                mode,
-                tier
-        );
+        String tier = data.getTier(mode);
+
+        if (!isValidTier(tier)) {
+            return null;
+        }
+
+        return new DisplayTier(type, mode, tier);
+    }
+
+    private static boolean isValidTier(String tier) {
+
+        if (tier == null || tier.isBlank()) {
+            return false;
+        }
+
+        if ("UNRANKED".equalsIgnoreCase(tier)
+                && !UniversalTierTaggerClient.CONFIG.showUnranked) {
+            return false;
+        }
+
+        return true;
     }
 
     public record DisplayTier(
