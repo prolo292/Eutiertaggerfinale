@@ -4,7 +4,6 @@ import com.xss1lent.universaltiertagger.gui.TierConfigScreen;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.input.KeyEvent;
 import org.lwjgl.glfw.GLFW;
 
 public class KeyBindings {
@@ -15,11 +14,7 @@ public class KeyBindings {
 
         openMenuKey = new KeyMapping(
                 "key.universal_tiertagger.open_menu",
-                new KeyEvent(
-                        GLFW.GLFW_KEY_Y,
-                        GLFW.GLFW_KEY_Y,
-                        0
-                ),
+                GLFW.GLFW_KEY_Y,
                 "category.universal_tiertagger"
         );
 
