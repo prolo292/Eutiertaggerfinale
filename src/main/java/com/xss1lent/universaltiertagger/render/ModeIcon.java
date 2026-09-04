@@ -8,37 +8,37 @@ public class ModeIcon {
     }
 
     /**
-     * Returns the icon identifier used for a game mode.
+     * Returns the custom font character for each game mode.
      */
     public static String getIcon(GameMode mode) {
 
         if (mode == null) {
-            return "crystal";
+            return "\uE009";
         }
 
         return switch (mode) {
 
-            case SWORD -> "sword";
-            case AXE -> "axe";
-            case POT -> "pot";
-            case VANILLA -> "vanilla";
-            case SMP -> "smp";
-            case NETHOP -> "nethop";
-            case UHC -> "uhc";
-            case MACE -> "mace";
-            case CRYSTAL -> "crystal";
+            case SWORD -> "\uE001";
+            case AXE -> "\uE002";
+            case POT -> "\uE003";
+            case VANILLA -> "\uE004";
+            case SMP -> "\uE005";
+            case NETHOP -> "\uE006";
+            case UHC -> "\uE007";
+            case MACE -> "\uE008";
+            case CRYSTAL -> "\uE009";
 
-            default -> "crystal";
+            default -> "\uE009";
         };
     }
 
     /**
-     * MCPVP mode aliases.
+     * Returns an icon for MCPVP-specific mode names.
      */
     public static String getMCPVPIcon(String modeName) {
 
         if (modeName == null) {
-            return "crystal";
+            return "\uE009";
         }
 
         String mode = modeName.toLowerCase()
@@ -47,17 +47,17 @@ public class ModeIcon {
 
         return switch (mode) {
 
-            case "shield" -> "axe";
+            case "shield" -> "\uE002";
 
-            case "endfight" -> "vanilla";
+            case "endfight" -> "\uE004";
 
-            case "cpvplategame" -> "crystal";
+            case "cpvplategame" -> "\uE009";
 
-            case "smpearly" -> "uhc";
+            case "smpearly" -> "\uE007";
 
-            case "spear" -> "spear";
+            case "spear" -> "\uE010";
 
-            default -> "crystal";
+            default -> "\uE009";
         };
     }
 }
