@@ -24,25 +24,43 @@ public class TierTextFormatter {
             return "";
         }
 
+        String tier = displayTier.tier();
+
+        if (tier == null || tier.isBlank()) {
+            return "";
+        }
+
+        // Do not display unranked players unless enabled.
+        if ("UNRANKED".equalsIgnoreCase(tier)
+                && !UniversalTierTaggerClient.CONFIG.showUnranked) {
+            return "";
+        }
+
         StringBuilder builder = new StringBuilder();
 
+        /*
+         * Tierlist identifier.
+         *
+         * The actual logo/icon rendering is handled separately by
+         * TierComponentFormatter. This text formatter only provides
+         * fallback text.
+         */
         if (UniversalTierTaggerClient.CONFIG.showTierlistLogo) {
 
             builder.append("[")
-                    .append(getTierlistShortName(
-                            displayTier.tierlist().name()
-                    ))
+                    .append(
+                            getTierlistShortName(
+                                    displayTier.tierlist().name()
+                            )
+                    )
                     .append("] ");
         }
 
-        if (UniversalTierTaggerClient.CONFIG.showModeIcon) {
-
-            builder.append("[")
-                    .append(displayTier.mode().getDisplayName())
-                    .append("] ");
-        }
-
-        builder.append(displayTier.tier());
+        /*
+         * Mode icon is rendered separately.
+         * Do NOT put [Sword], [Axe], etc. here.
+         */
+        builder.append(tier);
 
         return builder.toString();
     }
@@ -61,7 +79,7 @@ public class TierTextFormatter {
         );
     }
 
-    private static String getTierlistShortName(String tierlist) {
+    public static String getTierlistShortName(String tierlist) {
 
         if (tierlist == null) {
             return "UNKNOWN";
