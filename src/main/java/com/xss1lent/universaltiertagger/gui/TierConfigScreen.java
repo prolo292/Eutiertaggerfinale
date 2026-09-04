@@ -29,16 +29,38 @@ public class TierConfigScreen extends Screen {
             "MCPVP"
     };
 
-    private static final String[] MODES = {
+    private static final String[] EUROPEAN_MODES = {
             "SWORD",
             "AXE",
-            "UHC",
-            "NETHOP",
             "POT",
             "VANILLA",
             "SMP",
+            "NETHOP",
+            "UHC",
             "MACE",
             "CRYSTAL"
+    };
+
+    private static final String[] MCTIERS_MODES = {
+            "SWORD",
+            "MACE",
+            "UHC",
+            "AXE",
+            "NETHOP",
+            "POT",
+            "VANILLA",
+            "SMP"
+    };
+
+    private static final String[] MCPVP_MODES = {
+            "SWORD",
+            "SHIELD",
+            "POT",
+            "EARLY_GAME",
+            "END_GAME",
+            "MACE",
+            "LATE_GAME",
+            "SPEAR"
     };
 
     public TierConfigScreen(Screen parent) {
@@ -52,126 +74,76 @@ public class TierConfigScreen extends Screen {
         int centerX = this.width / 2;
         int startY = this.height / 2 - 135;
 
-        primaryButton = addButton(
-                centerX,
-                startY,
-                button -> {
-                    cyclePrimaryTierlist();
-                    updateButtons();
-                }
-        );
+        primaryButton = addButton(centerX, startY, button -> {
+            cyclePrimaryTierlist();
+            ensureValidSpecificMode();
+            updateButtons();
+        });
 
-        secondaryButton = addButton(
-                centerX,
-                startY + 23,
-                button -> {
-                    cycleSecondaryTierlist();
-                    updateButtons();
-                }
-        );
+        secondaryButton = addButton(centerX, startY + 23, button -> {
+            cycleSecondaryTierlist();
+            updateButtons();
+        });
 
-        secondaryToggleButton = addButton(
-                centerX,
-                startY + 46,
-                button -> {
-                    UniversalTierTaggerClient.CONFIG.showSecondaryTierlist =
-                            !UniversalTierTaggerClient.CONFIG.showSecondaryTierlist;
+        secondaryToggleButton = addButton(centerX, startY + 46, button -> {
+            UniversalTierTaggerClient.CONFIG.showSecondaryTierlist =
+                    !UniversalTierTaggerClient.CONFIG.showSecondaryTierlist;
+            updateButtons();
+        });
 
-                    updateButtons();
-                }
-        );
+        displayTypeButton = addButton(centerX, startY + 69, button -> {
 
-        displayTypeButton = addButton(
-                centerX,
-                startY + 69,
-                button -> {
+            if ("HIGHEST".equalsIgnoreCase(
+                    UniversalTierTaggerClient.CONFIG.displayType
+            )) {
+                UniversalTierTaggerClient.CONFIG.displayType = "SPECIFIC";
+            } else {
+                UniversalTierTaggerClient.CONFIG.displayType = "HIGHEST";
+            }
 
-                    if ("HIGHEST".equalsIgnoreCase(
-                            UniversalTierTaggerClient.CONFIG.displayType
-                    )) {
-                        UniversalTierTaggerClient.CONFIG.displayType = "SPECIFIC";
-                    } else {
-                        UniversalTierTaggerClient.CONFIG.displayType = "HIGHEST";
-                    }
+            updateButtons();
+        });
 
-                    updateButtons();
-                }
-        );
+        modeButton = addButton(centerX, startY + 92, button -> {
+            cycleSpecificMode();
+            updateButtons();
+        });
 
-        modeButton = addButton(
-                centerX,
-                startY + 92,
-                button -> {
-                    cycleSpecificMode();
-                    updateButtons();
-                }
-        );
+        tabButton = addButton(centerX, startY + 115, button -> {
+            UniversalTierTaggerClient.CONFIG.showInTab =
+                    !UniversalTierTaggerClient.CONFIG.showInTab;
+            updateButtons();
+        });
 
-        tabButton = addButton(
-                centerX,
-                startY + 115,
-                button -> {
-                    UniversalTierTaggerClient.CONFIG.showInTab =
-                            !UniversalTierTaggerClient.CONFIG.showInTab;
+        nametagButton = addButton(centerX, startY + 138, button -> {
+            UniversalTierTaggerClient.CONFIG.showNametags =
+                    !UniversalTierTaggerClient.CONFIG.showNametags;
+            updateButtons();
+        });
 
-                    updateButtons();
-                }
-        );
+        modeIconButton = addButton(centerX, startY + 161, button -> {
+            UniversalTierTaggerClient.CONFIG.showModeIcon =
+                    !UniversalTierTaggerClient.CONFIG.showModeIcon;
+            updateButtons();
+        });
 
-        nametagButton = addButton(
-                centerX,
-                startY + 138,
-                button -> {
-                    UniversalTierTaggerClient.CONFIG.showNametags =
-                            !UniversalTierTaggerClient.CONFIG.showNametags;
+        logoButton = addButton(centerX, startY + 184, button -> {
+            UniversalTierTaggerClient.CONFIG.showTierlistLogo =
+                    !UniversalTierTaggerClient.CONFIG.showTierlistLogo;
+            updateButtons();
+        });
 
-                    updateButtons();
-                }
-        );
+        unrankedButton = addButton(centerX, startY + 207, button -> {
+            UniversalTierTaggerClient.CONFIG.showUnranked =
+                    !UniversalTierTaggerClient.CONFIG.showUnranked;
+            updateButtons();
+        });
 
-        modeIconButton = addButton(
-                centerX,
-                startY + 161,
-                button -> {
-                    UniversalTierTaggerClient.CONFIG.showModeIcon =
-                            !UniversalTierTaggerClient.CONFIG.showModeIcon;
-
-                    updateButtons();
-                }
-        );
-
-        logoButton = addButton(
-                centerX,
-                startY + 184,
-                button -> {
-                    UniversalTierTaggerClient.CONFIG.showTierlistLogo =
-                            !UniversalTierTaggerClient.CONFIG.showTierlistLogo;
-
-                    updateButtons();
-                }
-        );
-
-        unrankedButton = addButton(
-                centerX,
-                startY + 207,
-                button -> {
-                    UniversalTierTaggerClient.CONFIG.showUnranked =
-                            !UniversalTierTaggerClient.CONFIG.showUnranked;
-
-                    updateButtons();
-                }
-        );
-
-        hideOwnButton = addButton(
-                centerX,
-                startY + 230,
-                button -> {
-                    UniversalTierTaggerClient.CONFIG.hideOwnTag =
-                            !UniversalTierTaggerClient.CONFIG.hideOwnTag;
-
-                    updateButtons();
-                }
-        );
+        hideOwnButton = addButton(centerX, startY + 230, button -> {
+            UniversalTierTaggerClient.CONFIG.hideOwnTag =
+                    !UniversalTierTaggerClient.CONFIG.hideOwnTag;
+            updateButtons();
+        });
 
         this.addRenderableWidget(
                 Button.builder(
@@ -185,6 +157,7 @@ public class TierConfigScreen extends Screen {
                 ).build()
         );
 
+        ensureValidSpecificMode();
         updateButtons();
     }
 
@@ -193,17 +166,11 @@ public class TierConfigScreen extends Screen {
             int y,
             Button.OnPress action
     ) {
-
         return this.addRenderableWidget(
                 Button.builder(
                         Component.literal(""),
                         action
-                ).bounds(
-                        centerX - 110,
-                        y,
-                        220,
-                        20
-                ).build()
+                ).bounds(centerX - 110, y, 220, 20).build()
         );
     }
 
@@ -230,14 +197,51 @@ public class TierConfigScreen extends Screen {
 
     private void cycleSpecificMode() {
 
+        String[] modes = getModesForCurrentTierlist();
+
         UniversalTierTaggerClient.CONFIG.specificMode =
                 getNext(
-                        MODES,
+                        modes,
                         UniversalTierTaggerClient.CONFIG.specificMode
                 );
     }
 
-    private String getNext(String[] values, String current) {
+    private String[] getModesForCurrentTierlist() {
+
+        String tierlist =
+                UniversalTierTaggerClient.CONFIG.primaryTierlist;
+
+        if ("MCPVP".equalsIgnoreCase(tierlist)) {
+            return MCPVP_MODES;
+        }
+
+        if ("MCTIERS".equalsIgnoreCase(tierlist)) {
+            return MCTIERS_MODES;
+        }
+
+        return EUROPEAN_MODES;
+    }
+
+    private void ensureValidSpecificMode() {
+
+        String[] modes = getModesForCurrentTierlist();
+
+        String current =
+                UniversalTierTaggerClient.CONFIG.specificMode;
+
+        for (String mode : modes) {
+            if (mode.equalsIgnoreCase(current)) {
+                return;
+            }
+        }
+
+        UniversalTierTaggerClient.CONFIG.specificMode = modes[0];
+    }
+
+    private String getNext(
+            String[] values,
+            String current
+    ) {
 
         for (int i = 0; i < values.length; i++) {
 
@@ -251,6 +255,18 @@ public class TierConfigScreen extends Screen {
 
     private String onOff(boolean value) {
         return value ? "ON" : "OFF";
+    }
+
+    private String formatMode(String mode) {
+
+        return switch (mode) {
+            case "EARLY_GAME" -> "Early Game";
+            case "END_GAME" -> "End Game";
+            case "LATE_GAME" -> "Late Game";
+            case "NETHOP" -> "NethOP";
+            default -> mode.substring(0, 1)
+                    + mode.substring(1).toLowerCase();
+        };
     }
 
     private void updateButtons() {
@@ -280,54 +296,46 @@ public class TierConfigScreen extends Screen {
 
         modeButton.setMessage(Component.literal(
                 "Specific Mode: "
-                        + UniversalTierTaggerClient.CONFIG.specificMode
+                        + formatMode(
+                                UniversalTierTaggerClient.CONFIG.specificMode
+                        )
         ));
 
-        modeButton.active = "SPECIFIC".equalsIgnoreCase(
-                UniversalTierTaggerClient.CONFIG.displayType
-        );
+        modeButton.active =
+                "SPECIFIC".equalsIgnoreCase(
+                        UniversalTierTaggerClient.CONFIG.displayType
+                );
 
         tabButton.setMessage(Component.literal(
                 "Show in Tab: "
-                        + onOff(
-                                UniversalTierTaggerClient.CONFIG.showInTab
-                        )
+                        + onOff(UniversalTierTaggerClient.CONFIG.showInTab)
         ));
 
         nametagButton.setMessage(Component.literal(
                 "Show Nametags: "
-                        + onOff(
-                                UniversalTierTaggerClient.CONFIG.showNametags
-                        )
+                        + onOff(UniversalTierTaggerClient.CONFIG.showNametags)
         ));
 
         modeIconButton.setMessage(Component.literal(
                 "Show Mode Icon: "
-                        + onOff(
-                                UniversalTierTaggerClient.CONFIG.showModeIcon
-                        )
+                        + onOff(UniversalTierTaggerClient.CONFIG.showModeIcon)
         ));
 
         logoButton.setMessage(Component.literal(
                 "Show Tierlist Logo: "
                         + onOff(
-                                UniversalTierTaggerClient.CONFIG
-                                        .showTierlistLogo
+                                UniversalTierTaggerClient.CONFIG.showTierlistLogo
                         )
         ));
 
         unrankedButton.setMessage(Component.literal(
                 "Show Unranked: "
-                        + onOff(
-                                UniversalTierTaggerClient.CONFIG.showUnranked
-                        )
+                        + onOff(UniversalTierTaggerClient.CONFIG.showUnranked)
         ));
 
         hideOwnButton.setMessage(Component.literal(
                 "Hide Own Tag: "
-                        + onOff(
-                                UniversalTierTaggerClient.CONFIG.hideOwnTag
-                        )
+                        + onOff(UniversalTierTaggerClient.CONFIG.hideOwnTag)
         ));
     }
 
@@ -348,12 +356,7 @@ public class TierConfigScreen extends Screen {
             float delta
     ) {
 
-        this.renderBackground(
-                graphics,
-                mouseX,
-                mouseY,
-                delta
-        );
+        this.renderBackground(graphics, mouseX, mouseY, delta);
 
         graphics.drawCenteredString(
                 this.font,
