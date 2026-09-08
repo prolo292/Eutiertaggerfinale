@@ -17,11 +17,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class LivingEntityRendererMixin {
 
     @Inject(
-            method = "getDisplayName",
+            method = "getNameTag",
             at = @At("RETURN"),
             cancellable = true
     )
-    private void universalTierTagger$modifyDisplayName(
+    private void universalTierTagger$modifyNameTag(
             Entity entity,
             CallbackInfoReturnable<Component> cir
     ) {
@@ -57,55 +57,24 @@ public abstract class LivingEntityRendererMixin {
             return;
         }
 
-        Component result = Component.empty();
-
-        // Secondary tier
-        if (UniversalTierTaggerClient.CONFIG.showSecondaryTierlist) {
-
-            TierDisplayManager.DisplayTier secondaryTier =
-                    TierDisplayManager.getSecondaryTier(username);
-
-            if (secondaryTier != null) {
-
-                Component secondary =
-                        TierComponentFormatter.formatSecondary(
-                                secondaryTier
-                        );
-
-                if (!secondary.getString().isBlank()) {
-
-                    result = result.copy()
-                            .append(secondary)
-                            .append(Component.literal(" "));
-                }
-            }
-        }
-
-        // Primary tier
-        TierDisplayManager.DisplayTier primaryTier =
+        TierDisplayManager.DisplayTier primary =
                 TierDisplayManager.getPrimaryTier(username);
 
-        if (primaryTier != null) {
-
-            Component primary =
-                    TierComponentFormatter.formatPrimary(
-                            primaryTier
-                    );
-
-            if (!primary.getString().isBlank()) {
-
-                result = result.copy()
-                        .append(primary)
-                        .append(Component.literal(" "));
-            }
+        if (primary == null) {
+            return;
         }
 
-        if (!result.getString().isBlank()) {
+        Component tier =
+                TierComponentFormatter.formatPrimary(primary);
 
-            cir.setReturnValue(
-                    result.copy()
-                            .append(originalName)
-            );
+        if (tier == null || tier.getString().isBlank()) {
+            return;
         }
+
+        cir.setReturnValue(
+                tier.copy()
+                        .append(Component.literal(" "))
+                        .append(originalName)
+        );
     }
 }
