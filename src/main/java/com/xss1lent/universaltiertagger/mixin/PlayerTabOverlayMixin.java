@@ -4,6 +4,7 @@ import com.mojang.authlib.GameProfile;
 import com.xss1lent.universaltiertagger.UniversalTierTaggerClient;
 import com.xss1lent.universaltiertagger.display.TierComponentFormatter;
 import com.xss1lent.universaltiertagger.display.TierDisplayManager;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.PlayerTabOverlay;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.network.chat.Component;
@@ -30,6 +31,10 @@ public class PlayerTabOverlayMixin {
             return;
         }
 
+        if (playerInfo == null) {
+            return;
+        }
+
         GameProfile profile = playerInfo.getProfile();
 
         if (profile == null) {
@@ -42,66 +47,32 @@ public class PlayerTabOverlayMixin {
             return;
         }
 
-        // Optional: hide our own tier tag
-        if (UniversalTierTaggerClient.CONFIG.hideOwnTag
-                && UniversalTierTaggerClient.CONFIG != null) {
+        // Hide own tier if enabled
+        if (UniversalTierTaggerClient.CONFIG.hideOwnTag) {
+            Minecraft minecraft = Minecraft.getInstance();
 
-            if (net.minecraft.client.Minecraft.getInstance().player != null
+            if (minecraft.player != null
+                    && minecraft.player.getGameProfile().name() != null
                     && username.equalsIgnoreCase(
-                    net.minecraft.client.Minecraft.getInstance()
-                            .player
-                            .getGameProfile()
-                            .name()
+                    minecraft.player.getGameProfile().name()
             )) {
                 return;
             }
         }
 
-        Component result = Component.empty();
-
-        // Secondary tier first
-        if (UniversalTierTaggerClient.CONFIG.showSecondaryTierlist) {
-
-            TierDisplayManager.DisplayTier secondaryTier =
-                    TierDisplayManager.getSecondaryTier(username);
-
-            if (secondaryTier != null) {
-
-                Component secondaryComponent =
-                        TierComponentFormatter.formatSecondary(
-                                secondaryTier
-                        );
-
-                if (!secondaryComponent.getString().isBlank()) {
-
-                    result = result.copy()
-                            .append(secondaryComponent)
-                            .append(Component.literal(" "));
-                }
-            }
-        }
-
-        // Primary tier
+        // TAB ONLY SHOWS THE PRIMARY TIERLIST
         TierDisplayManager.DisplayTier primaryTier =
                 TierDisplayManager.getPrimaryTier(username);
 
-        if (primaryTier != null) {
-
-            Component primaryComponent =
-                    TierComponentFormatter.formatPrimary(
-                            primaryTier
-                    );
-
-            if (!primaryComponent.getString().isBlank()) {
-
-                result = result.copy()
-                        .append(primaryComponent)
-                        .append(Component.literal(" "));
-            }
+        if (primaryTier == null) {
+            return;
         }
 
-        // No tier information available
-        if (result.getString().isBlank()) {
+        Component primaryComponent =
+                TierComponentFormatter.formatPrimary(primaryTier);
+
+        if (primaryComponent == null
+                || primaryComponent.getString().isBlank()) {
             return;
         }
 
@@ -112,7 +83,9 @@ public class PlayerTabOverlayMixin {
         }
 
         cir.setReturnValue(
-                result.copy()
+                primaryComponent
+                        .copy()
+                        .append(Component.literal(" "))
                         .append(originalName)
         );
     }
